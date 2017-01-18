@@ -8,6 +8,8 @@ $ mvn compile
 
 ### Router commands
 
+
+
 ```
 $ attach [Process IP] [Process Port] [Link Weight] //establishes new link to the other routers
 $ start //starts the router
@@ -19,4 +21,7 @@ $ quit
 ```
 
 
+## References:
 
+- [Link-State routing Wikipedia](https://en.wikipedia.org/wiki/Link-state_routing_protocol)
+- [Link-State routing implementation description](http://cnp3book.info.ucl.ac.be/principles/linkstate.html)
