@@ -17,9 +17,6 @@ public class Client {
             Socket sock = new Socket("127.0.0.1", port);
             ObjectOutputStream out = new ObjectOutputStream(sock.getOutputStream());
             out.writeObject(packet);
-            out.writeObject(packet);
-            out.writeObject(packet);
-            out.writeObject(packet);
             out.close();
             sock.close();
         } catch (Exception e){

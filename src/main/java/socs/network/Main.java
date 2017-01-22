@@ -17,7 +17,7 @@ public class Main {
   public static void main(String[] args) {
       //You cannot open a port below 1024, or you will have permission issue.
       //Check the port number first!
-
+/**
       Server s = new Server((short)1450);
       s.startServer();
 
@@ -28,9 +28,9 @@ public class Main {
       Client c = new Client();
       c.sendMsgToServer(1450,sos);
 
+**/
 
 
-/**
     if (args.length != 2) {
       System.out.println("usage: program port_num conf_path");
       System.exit(1);
@@ -40,6 +40,6 @@ public class Main {
     int port = Integer.parseInt(args[0]);
 
     Router r = new Router(new Configuration(args[1]), port);
-    r.terminal();**/
+    r.terminal();
   }
 }
