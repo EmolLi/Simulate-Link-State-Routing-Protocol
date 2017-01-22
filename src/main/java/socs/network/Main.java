@@ -1,9 +1,15 @@
 package socs.network;
 
+import socs.network.message.SOSPFPacket;
 import socs.network.node.Router;
+import socs.network.util.Client;
 import socs.network.util.Configuration;
 
 import socs.network.util.Server;
+
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
 
 
 public class Main {
@@ -14,6 +20,14 @@ public class Main {
 
       Server s = new Server((short)1450);
       s.startServer();
+
+
+      //Client
+      SOSPFPacket sos = new SOSPFPacket();
+      sos.dstIP="fasdf";
+      Client c = new Client();
+      c.sendMsgToServer(1450,sos);
+
 
 
 /**
