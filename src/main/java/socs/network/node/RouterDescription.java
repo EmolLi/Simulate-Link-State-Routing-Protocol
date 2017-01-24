@@ -2,7 +2,7 @@ package socs.network.node;
 
 public class RouterDescription {
   //used to socket communication
-  String processIPAddress;
+  String processIPAddress="127.0.0.1";
   short processPortNumber;
   //used to identify the router in the simulated network space
   String simulatedIPAddress;

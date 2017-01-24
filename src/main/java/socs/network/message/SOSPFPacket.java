@@ -11,8 +11,8 @@ public class SOSPFPacket implements Serializable {
   public short srcProcessPort;
 
   //simulated IP address
-  public String srcIP;
-  public String dstIP;
+  public String simulatedSrcIP;
+  public String simulatedDstIP;
 
   //common header
   public short sospfType; //0 - HELLO, 1 - LinkState Update
