@@ -1,6 +1,6 @@
 package socs.network.node;
 
-import socs.network.message.SOSPFPacket;
+import socs.network.message.Packet;
 import socs.network.util.Configuration;
 
 import java.io.BufferedReader;
@@ -17,79 +17,27 @@ import java.util.HashMap;
 
 public class Router {
 	private Socket connection;
+	private final Server server;
 
 	protected LinkStateDatabase lsd;
 
-	RouterDescription receivingRouter = new RouterDescription();
+	RouterDescription localRouterDescription;
 
 	//assuming that all routers are with 4 ports
 	private final HashMap<String,Link> mapIpLink = new HashMap<String,Link>();
 
 
 	public Router(Configuration config) throws IOException {
-		receivingRouter.simulatedIPAddress = config.getString("socs.network.router.ip");
-		receivingRouter.processPortNumber = config.getShort("socs.network.router.port");
-		lsd = new LinkStateDatabase(receivingRouter);
-		startServer(this.mapIpLink);
+		localRouterDescription = new RouterDescription(config.getString("socs.network.router.ip"),config.getShort("socs.network.router.port"));
+		lsd = new LinkStateDatabase(localRouterDescription);
+		this.server = new Server(mapIpLink,localRouterDescription);
 	}
-	
+
 	public int getPortsSize(){
 		return this.mapIpLink.size();
 	}
 
-	/* We need to be able to listen for incoming connections.
-	 * Since we have in total four links, where each link is associated with a different port.
-	 * We need our server to listen on four different sockets.
-	 */
-	private void startServer(final HashMap map) throws IOException {
-		final ServerSocket serverSocket = new ServerSocket(receivingRouter.processPortNumber);
 
-		System.out.println("Server is running on port:"+receivingRouter.processPortNumber);
-		Thread serverThread = new Thread(new Runnable() {
-			public void run() {
-				try {
-					while(map.size() < 4){
-						connection = serverSocket.accept();
-						handleAcceptedConnection(connection);
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		});
-		serverThread.start();
-	}
-
-
-	//critical section because threads going to be modifying Link array 
-	//Link link = new Link(rd);
-	//start of a critical section since we want to allocate threads to different indecies
-	private void handleAcceptedConnection(Socket connection) throws IOException {
-
-		SOSPFPacket packetFromClient;
-		RouterDescription remoteRouter = new RouterDescription();
-
-		ObjectInputStream in = new ObjectInputStream(connection.getInputStream());
-		try {
-			packetFromClient = (SOSPFPacket) in.readObject();
-			if(this.receivingRouter.simulatedIPAddress.compareTo(packetFromClient.simulatedDstIP) == 0){
-				remoteRouter.processPortNumber = packetFromClient.srcProcessPort;
-				remoteRouter.simulatedIPAddress = packetFromClient.simulatedSrcIP;
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-
-		//critical section
-		Link link = new Link(this.receivingRouter, remoteRouter);
-
-		if(mapIpLink.size() < 4){
-			this.mapIpLink.put(remoteRouter.simulatedIPAddress, link);
-		}
-		System.out.println("Link created: "+remoteRouter.processPortNumber+" - "+remoteRouter.simulatedIPAddress);
-	}
 
 	/**
 	 * output the shortest path to the given destination ip
@@ -118,33 +66,32 @@ public class Router {
 	 * additionally, weight is the cost to transmitting data through the link
 	 * <p/>
 	 * NOTE: this command should not trigger link database synchronization
+	 * @throws Exception 
 	 */
-	private void processAttach(String processIP, short processPort, String simulatedIP, short weight) {
+	private void processAttach(String processIP, short processPort, String simulatedDstIP, short weight) throws Exception {
 		try {
 			if(!(this.mapIpLink.size() < 4)){
 				return;
 			}
-			Socket sock = new Socket(processIP, processPort);
-			System.out.println("Connected to server with:"+simulatedIP);
+			Socket connectionToRemote = new Socket(processIP, processPort);
+			System.out.println("Connected to server with:"+simulatedDstIP);
 
-			SOSPFPacket data = new SOSPFPacket();
-			data.simulatedDstIP = simulatedIP;
-			data.simulatedSrcIP = this.receivingRouter.simulatedIPAddress;
-			data.sospfType = 2;
+			Packet packetToSend = new Packet(this.localRouterDescription.simulatedIPAddress, simulatedDstIP, 2);
+
+			ObjectOutputStream out = new ObjectOutputStream(connectionToRemote.getOutputStream());
+			out.writeObject(packetToSend);
+			RouterDescription remoteRouter = new RouterDescription(simulatedDstIP,processPort);
 			
-			ObjectOutputStream out = new ObjectOutputStream(sock.getOutputStream());
-			out.writeObject(data);
-			RouterDescription remoteRouter = new RouterDescription();
-			remoteRouter.simulatedIPAddress = simulatedIP;
-			remoteRouter.processPortNumber = processPort;
 			//we need to send router description of a connecting router
-			Link link = new Link(this.receivingRouter, remoteRouter);
+			Link link = new Link(this.localRouterDescription, remoteRouter, connectionToRemote);
+			link.send(packetToSend);
 			if(this.mapIpLink.size() < 4){
-				this.mapIpLink.put(simulatedIP, link);
+				this.mapIpLink.put(simulatedDstIP, link);
 			}
-			
+			else{
+				throw new Exception("This router cannot creat new Links");
+			}
 
-			sock.close();
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -184,7 +131,16 @@ public class Router {
 
 	}
 
-	public void terminal() {
+
+
+
+	private void terminal() {
+		/*		try {
+			//startServer(this.mapIpLink);
+		} catch (IOException e1) {
+			System.out.println("Server Error");
+			e1.printStackTrace();
+		}*/
 		try {
 			InputStreamReader isReader = new InputStreamReader(System.in);
 			BufferedReader br = new BufferedReader(isReader);
@@ -225,6 +181,16 @@ public class Router {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	public void startRouter(){
+		try {
+			this.server.startServer();
+		} catch (IOException e) {
+			System.err.println("Error with SERVER");
+			e.printStackTrace();
+		}		
+		this.terminal();
 	}
 
 }

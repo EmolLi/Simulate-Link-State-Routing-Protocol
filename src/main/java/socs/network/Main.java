@@ -13,6 +13,6 @@ public class Main {
       System.exit(1);
     }
     Router r = new Router(new Configuration(args[0]));
-    r.terminal();
+    r.startRouter();
   }
 }
