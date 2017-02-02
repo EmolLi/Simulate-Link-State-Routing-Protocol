@@ -11,13 +11,24 @@ public class Link {
 
 	RouterDescription local_router;
 	RouterDescription remote_router;
-	Socket connection;
+	int portNum;
+	final Socket connection;
 	ObjectOutputStream out;
 	ObjectInputStream in;
 
+	/**
+	 *
+	 * @param local_router
+	 * @param remote_router
+	 * @param portNum Real process port number. Client ports are different from server port. This is the port that local router (client) used to communicate with remote router (server).
+	 * @param connection
+	 * @throws IOException
+	 */
 	public Link(RouterDescription local_router, RouterDescription remote_router, Socket connection) throws IOException {
 		this.local_router = local_router;
 		this.remote_router = remote_router;
+		//this.portNum = portNum;
+        this.connection = connection;
 		this.out = new ObjectOutputStream(connection.getOutputStream());
 		this.in = new ObjectInputStream(connection.getInputStream());
 	}
@@ -30,6 +41,9 @@ public class Link {
 	}*/
 
 	public void send(Packet packet) throws IOException{
+	    if (this.connection == null){
+	        System.out.print("connection null");
+        }
 		out.writeObject(packet);
 	}
 

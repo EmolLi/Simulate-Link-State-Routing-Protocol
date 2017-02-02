@@ -73,7 +73,10 @@ public class Router {
 			if(!(this.mapIpLink.size() < 4)){
 				return;
 			}
+
+			//
 			Socket connectionToRemote = new Socket(processIP, processPort);
+			InetAddress local = connectionToRemote.getLocalAddress();
 			System.out.println("Connected to server with:"+simulatedDstIP);
 
 			Packet packetToSend = new Packet(this.localRouterDescription.simulatedIPAddress, simulatedDstIP, 2);
@@ -81,10 +84,12 @@ public class Router {
 			ObjectOutputStream out = new ObjectOutputStream(connectionToRemote.getOutputStream());
 			out.writeObject(packetToSend);
 			RouterDescription remoteRouter = new RouterDescription(simulatedDstIP,processPort);
-			
+
+
 			//we need to send router description of a connecting router
 			Link link = new Link(this.localRouterDescription, remoteRouter, connectionToRemote);
 			link.send(packetToSend);
+
 			if(this.mapIpLink.size() < 4){
 				this.mapIpLink.put(simulatedDstIP, link);
 			}
@@ -104,6 +109,29 @@ public class Router {
 	 */
 	private void processStart() {
 
+		for (Link link : mapIpLink.values()){
+			try {
+				link.send(new Packet(link.local_router.simulatedIPAddress, link.remote_router.simulatedIPAddress, 0));
+
+				Packet packet = link.read();
+
+				if(packet.packetType == 0){
+					link.remote_router.status = RouterStatus.TWO_WAY;
+					System.out.println("Set "+ link.remote_router.simulatedIPAddress + "to TWO WAY");
+				}
+				else {
+					System.err.println("Expecting packet HELLO");
+				}
+
+				link.send(new Packet(link.local_router.simulatedIPAddress, link.remote_router.simulatedIPAddress, 0));
+
+			}catch (Exception e){
+				System.err.println("Error in process start");
+				e.printStackTrace();
+			}
+
+
+		}
 	}
 
 	/**

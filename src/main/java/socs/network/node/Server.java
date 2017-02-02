@@ -5,15 +5,23 @@ import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import socs.network.message.Packet;
 
+
+
+
 public class Server {
+	private final ExecutorService threadPool;
 	private final HashMap<String,Link> mapIpLink;
-	private Socket connection;
 	private final RouterDescription localRouter;
 	
 	public Server(HashMap<String,Link> mapIpLink, RouterDescription localRouter){
+		this.threadPool = Executors.newFixedThreadPool(5);
+		//delete connection here because server has more than 1 connection.
 		this.localRouter = localRouter;
 		this.mapIpLink = mapIpLink;
 	}
@@ -27,49 +35,20 @@ public class Server {
 			public void run() {
 				try {
 					while(mapIpLink.size() < 4){
-						connection = serverSocket.accept();
-						handleAcceptedConnection();
+						Socket connection = serverSocket.accept();
+						threadPool.submit(new ClientTask(mapIpLink, connection, localRouter));
 					}
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
 		});
-		serverThread.start();		
-	}
-	
-	private void handleAcceptedConnection() throws IOException {
-		
-		Packet packetFromClient;
-		RouterDescription remoteRouter = initRemoteRouterDescription();
-		//critical section
-		Link link = new Link(this.localRouter, remoteRouter, connection);
+		serverThread.start();
 
-		if(mapIpLink.size() < 4){
-			this.mapIpLink.put(remoteRouter.simulatedIPAddress, link);
-		}
-		System.out.println("Link created: "+remoteRouter.processPortNumber+" - "+remoteRouter.simulatedIPAddress);
-		System.out.print(">> ");;
+
+
 	}
 
-	private RouterDescription initRemoteRouterDescription()throws IOException {
-		RouterDescription remoteRouter = null;
-		Packet packetFromClient;
-		ObjectInputStream in = new ObjectInputStream(connection.getInputStream());
-		
-		
-		try {
-			packetFromClient = (Packet) in.readObject();
-			if(this.localRouter.simulatedIPAddress.compareTo(packetFromClient.simulatedDstIP) == 0){
-				remoteRouter = new RouterDescription(packetFromClient.simulatedSrcIP,packetFromClient.srcProcessPort);
-			}
-			else {
-				throw new Exception("Not for us");
-			}
 
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return remoteRouter;
-	}
+
 }

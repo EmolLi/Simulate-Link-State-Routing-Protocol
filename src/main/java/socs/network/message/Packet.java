@@ -14,7 +14,7 @@ public class Packet implements Serializable {
 	public String simulatedDstIP;
 
 	//common header
-	public int packetType; //0 - HELLO, 1 - LinkState Update 2 - Attach
+	public int packetType; //0 - HELLO, 1 - LinkState Update
 	public String routerID;
 
 	//used by HELLO message to identify the sender of the message
