@@ -20,9 +20,9 @@ public class Router {
 	private Socket connection;
 	private final Server server;
 
-	protected LinkStateDatabase lsd;
+	private LinkStateDatabase lsd;
 
-	RouterDescription localRouterDescription;
+	private RouterDescription localRouterDescription;
 
 	//assuming that all routers are with 4 ports
 	private final HashMap<String,Link> mapIpLink = new HashMap<String,Link>();
@@ -67,7 +67,6 @@ public class Router {
 	 * additionally, weight is the cost to transmitting data through the link
 	 * <p/>
 	 * NOTE: this command should not trigger link database synchronization
-	 * @throws Exception 
 	 */
 	private void processAttach(String processIP, short processPort, String simulatedDstIP, short weight) throws Exception {
 		try {
@@ -141,6 +140,7 @@ public class Router {
 
 		//LSA database update
 
+		/**
 		LSA lsa = new LSA(this.localRouterDescription.simulatedIPAddress, lsd.getNextLSASeqNum());
 		for (Link link : mapIpLink.values()){
 			lsa.links.add(link.linkDescription);
@@ -156,6 +156,7 @@ public class Router {
 		}
 
 		//boardcast LSAUPDATE
+		 **/
 	}
 
 
