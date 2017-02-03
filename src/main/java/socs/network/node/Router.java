@@ -1,5 +1,6 @@
 package socs.network.node;
 
+import socs.network.message.LSA;
 import socs.network.message.Packet;
 import socs.network.util.Configuration;
 
@@ -74,12 +75,13 @@ public class Router {
 				return;
 			}
 
-			//
+
 			Socket connectionToRemote = new Socket(processIP, processPort);
 			InetAddress local = connectionToRemote.getLocalAddress();
 			System.out.println("Connected to server with:"+simulatedDstIP);
 
-			Packet packetToSend = new Packet(this.localRouterDescription.simulatedIPAddress, simulatedDstIP, 2);
+			//we need to pass the weight to the server, so it knows the weight of this link
+			Packet packetToSend = Packet.AttachLinkRequest(this.localRouterDescription.simulatedIPAddress, simulatedDstIP, weight);
 
 			ObjectOutputStream out = new ObjectOutputStream(connectionToRemote.getOutputStream());
 			out.writeObject(packetToSend);
@@ -87,7 +89,7 @@ public class Router {
 
 
 			//we need to send router description of a connecting router
-			Link link = new Link(this.localRouterDescription, remoteRouter, connectionToRemote);
+			Link link = new Link(this.localRouterDescription, remoteRouter, connectionToRemote, weight);
 			link.send(packetToSend);
 
 			if(this.mapIpLink.size() < 4){
@@ -116,8 +118,12 @@ public class Router {
 				Packet packet = link.read();
 
 				if(packet.packetType == 0){
+					System.out.println("received HELLO from "+ packet.simulatedSrcIP);
 					link.remote_router.status = RouterStatus.TWO_WAY;
 					System.out.println("Set "+ link.remote_router.simulatedIPAddress + "to TWO WAY");
+
+
+
 				}
 				else {
 					System.err.println("Expecting packet HELLO");
@@ -132,7 +138,26 @@ public class Router {
 
 
 		}
+
+		//LSA database update
+
+		LSA lsa = new LSA(this.localRouterDescription.simulatedIPAddress, lsd.getNextLSASeqNum());
+		for (Link link : mapIpLink.values()){
+			lsa.links.add(link.linkDescription);
+		}
+
+		try {
+			//update local lsa
+			lsd.updateLSA(lsa);
+
+			//broadcast LSAUPDATE
+		}catch (Exception e){
+			System.err.println("NO NEED To UPDATE: " + lsa.toString());
+		}
+
+		//boardcast LSAUPDATE
 	}
+
 
 	/**
 	 * attach the link to the remote router, which is identified by the given simulated ip;
@@ -149,7 +174,9 @@ public class Router {
 	 * output the neighbors of the routers
 	 */
 	private void processNeighbors() {
-
+		for (Link link : mapIpLink.values()){
+			System.out.println(link.remote_router.simulatedIPAddress);
+		}
 	}
 
 	/**

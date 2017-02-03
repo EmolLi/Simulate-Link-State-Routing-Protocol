@@ -6,15 +6,20 @@ import java.util.LinkedList;
 public class LSA implements Serializable {
 
   //IP address of the router originate this LSA
-  public String linkStateID;
+  public String routerSimulatedIP;
   public int lsaSeqNumber = Integer.MIN_VALUE;
 
   public LinkedList<LinkDescription> links = new LinkedList<LinkDescription>();
 
+  public LSA(String routerSimulatedIP, int lsaSeqNumber){
+    this.routerSimulatedIP = routerSimulatedIP;
+    this.lsaSeqNumber = lsaSeqNumber;
+  }
+
   @Override
   public String toString() {
     StringBuffer sb = new StringBuffer();
-    sb.append(linkStateID + ":").append(lsaSeqNumber + "\n");
+    sb.append(routerSimulatedIP + ":").append(lsaSeqNumber + "\n");
     for (LinkDescription ld : links) {
       sb.append(ld);
     }

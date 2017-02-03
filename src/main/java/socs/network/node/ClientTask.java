@@ -45,9 +45,11 @@ public class ClientTask implements Runnable{
 
 
     private Link handleAcceptedConnection() throws Exception{
-        RouterDescription remoteRouter = initRemoteRouterDescription();
+        Packet packetFromClient =  getInitPacket();
+
+        RouterDescription remoteRouter = initRemoteRouterDescription(packetFromClient);
         //critical section
-        Link link = new Link(this.localRouter, remoteRouter, connection);
+        Link link = new Link(this.localRouter, remoteRouter, connection, packetFromClient.weight);
         if(mapIpLink.size() < 4){
             this.mapIpLink.put(remoteRouter.simulatedIPAddress, link);
 
@@ -60,22 +62,37 @@ public class ClientTask implements Runnable{
     }
 
 
-    private RouterDescription initRemoteRouterDescription()throws IOException {
-        RouterDescription remoteRouter = null;
-        Packet packetFromClient;
-        ObjectInputStream in = new ObjectInputStream(connection.getInputStream());
-
-        try {
+    /**
+     * This method reads the first packet the client send (the packet to set up the link)
+     * The packet serves two purpose:
+     *  1. it carries the link weight
+     *  2. it carries the simulated address of the destination router, so we have check whether this packet is for us, or user may have made a typo
+     * @return {Packet} initial packet
+     * @throws Exception
+     */
+    private Packet getInitPacket() throws Exception{
+        Packet packetFromClient = null;
+        try{
+            ObjectInputStream in = new ObjectInputStream(connection.getInputStream());
             packetFromClient = (Packet) in.readObject();
-            if(this.localRouter.simulatedIPAddress.compareTo(packetFromClient.simulatedDstIP) == 0){
-                remoteRouter = new RouterDescription(packetFromClient.simulatedSrcIP,packetFromClient.srcProcessPort);
-            }
-            else {
-                throw new Exception("Not for us");
-            }
-
-        } catch (Exception e) {
+        } catch (Exception e){
             e.printStackTrace();
+        }
+        if (packetFromClient == null) throw new Exception("didn't get init packet");
+        return packetFromClient;
+    }
+
+
+    private RouterDescription initRemoteRouterDescription(Packet packetFromClient)throws Exception {
+        RouterDescription remoteRouter = null;
+
+        //take the reading packet part out of the initRemoteROuterDescription method because we also need to read link weight from the packet --> see method getInitpacket
+
+        if(this.localRouter.simulatedIPAddress.compareTo(packetFromClient.simulatedDstIP) == 0){
+            remoteRouter = new RouterDescription(packetFromClient.simulatedSrcIP,packetFromClient.srcProcessPort);
+        }
+        else {
+            throw new Exception("Not for us");
         }
         return remoteRouter;
     }
@@ -109,6 +126,7 @@ public class ClientTask implements Runnable{
 
 
     private void gotHelloMsg(Packet packet){
+        System.out.println("received HELLO from "+ packet.simulatedSrcIP);
         Link link = mapIpLink.get(packet.simulatedSrcIP);
 
         if(link.remote_router.status == RouterStatus.TWO_WAY){

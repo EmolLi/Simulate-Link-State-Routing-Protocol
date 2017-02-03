@@ -25,10 +25,27 @@ public class Packet implements Serializable {
 	//used by LSAUPDATE
 	public Vector<LSA> lsaArray = null;
 
+	//used for attach (link establishment)
+	public int weight;
+
 	public Packet(String simulatedSrcIP, String simulatedDstIP, int packetType) {
 		this.simulatedSrcIP = simulatedSrcIP;
 		this.simulatedDstIP = simulatedDstIP;
 		this.packetType = packetType;
+	}
+
+	//create a LinkState Update package
+	public static Packet LSAUPDATE(String simulatedSrcIP, String simulatedDstIP, Vector<LSA> lsaArray){
+		Packet packet = new Packet(simulatedSrcIP, simulatedDstIP, 1);
+		packet.lsaArray = lsaArray;
+		return packet;
+	}
+
+	//create a AttachLinkRequest packet used in attach()
+	public static Packet AttachLinkRequest(String simulatedSrcIP, String simulatedDstIP, int weight){
+		Packet packet = new Packet(simulatedSrcIP, simulatedDstIP, 2);
+		packet.weight = weight;
+		return packet;
 	}
 
 }
