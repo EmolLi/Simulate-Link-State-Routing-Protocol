@@ -69,40 +69,63 @@ public class Router {
 	 * NOTE: this command should not trigger link database synchronization
 	 */
 	private void processAttach(String processIP, short processPort, String simulatedDstIP, short weight) throws Exception {
-		try {
+
+			if(this.localRouterDescription.simulatedIPAddress.equals(simulatedDstIP)){
+				System.err.flush();
+				System.err.print("Cannot connect to yourself!\n");
+				return;
+			}
+			if(mapIpLink.containsKey(simulatedDstIP)){
+				System.err.flush();
+				System.err.print("Already connected to this router.\n");
+				return;
+			}
+
 			if(!(this.mapIpLink.size() < 4)){
+				System.err.flush();
+				System.err.print("All ports are used.\n");
+				return;
+			}
+
+			Socket connectionToRemote = new Socket(processIP, processPort);
+			InetAddress local = connectionToRemote.getLocalAddress();
+
+			try {
+
+
+				//we need to pass the weight to the server, so it knows the weight of this link
+				Packet packetToSend = Packet.AttachLinkRequest(this.localRouterDescription.simulatedIPAddress, simulatedDstIP, weight);
+
+				ObjectOutputStream out = new ObjectOutputStream(connectionToRemote.getOutputStream());
+				out.writeObject(packetToSend);
+				RouterDescription remoteRouter = new RouterDescription(simulatedDstIP, processPort);
+
+				//we need to send router description of a connecting router
+				Link link = new Link(this.localRouterDescription, remoteRouter, connectionToRemote, weight);
+				link.send(packetToSend);
+
+				if(this.mapIpLink.size() < 4){ //you may want to check again because of competition between different
+					// threads.
+					//add critical section
+					this.mapIpLink.put(simulatedDstIP, link);
+				}
+				else{
+					//dont throw exception
+					System.err.flush();
+					System.err.print("All ports are used.\n");
+					return;
+				}
+
+			} catch (Exception e){
+				System.err.flush();
+				System.err.print("Connection rejected by remote router.\n");
 				return;
 			}
 
 
-			Socket connectionToRemote = new Socket(processIP, processPort);
-			InetAddress local = connectionToRemote.getLocalAddress();
-			System.out.println("Connected to server with:"+simulatedDstIP);
-
-			//we need to pass the weight to the server, so it knows the weight of this link
-			Packet packetToSend = Packet.AttachLinkRequest(this.localRouterDescription.simulatedIPAddress, simulatedDstIP, weight);
-
-			ObjectOutputStream out = new ObjectOutputStream(connectionToRemote.getOutputStream());
-			out.writeObject(packetToSend);
-			RouterDescription remoteRouter = new RouterDescription(simulatedDstIP,processPort);
 
 
-			//we need to send router description of a connecting router
-			Link link = new Link(this.localRouterDescription, remoteRouter, connectionToRemote, weight);
-			link.send(packetToSend);
-
-			if(this.mapIpLink.size() < 4){
-				this.mapIpLink.put(simulatedDstIP, link);
-			}
-			else{
-				throw new Exception("This router cannot creat new Links");
-			}
-
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			System.err.println("error connecting to "+processIP+":"+e);
-		}
+		System.out.println("Connected to server with:" + simulatedDstIP);
 	}
 
 	/**

@@ -34,9 +34,16 @@ public class Server {
 		Thread serverThread = new Thread(new Runnable() {
 			public void run() {
 				try {
-					while(mapIpLink.size() < 4){
+					while(true) {
 						Socket connection = serverSocket.accept();
-						threadPool.submit(new ClientTask(mapIpLink, connection, localRouter));
+
+						if (mapIpLink.size() < 4) {
+							//accept the connection
+							threadPool.submit(new ClientTask(mapIpLink, connection, localRouter));
+						}
+						else {
+							connection.close();
+						}
 					}
 				} catch (IOException e) {
 					e.printStackTrace();
