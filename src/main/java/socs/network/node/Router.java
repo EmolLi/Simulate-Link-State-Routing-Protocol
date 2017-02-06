@@ -102,6 +102,8 @@ public class Router {
 
 				//we need to send router description of a connecting router
 				Link link = new Link(this.localRouterDescription, remoteRouter, connectionToRemote, weight);
+				link.isClient = true;
+
 				link.send(packetToSend);
 
 				if(this.mapIpLink.size() < 4){ //you may want to check again because of competition between different
@@ -134,7 +136,9 @@ public class Router {
 	private void processStart() {
 
 		for (Link link : mapIpLink.values()){
-			try {
+			//we only start client.
+		    if (link.isClient == false) continue;
+		    try {
 				link.send(new Packet(link.local_router.simulatedIPAddress, link.remote_router.simulatedIPAddress, 0));
 
 				Packet packet = link.read();

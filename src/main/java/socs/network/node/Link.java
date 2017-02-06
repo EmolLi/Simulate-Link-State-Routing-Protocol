@@ -12,6 +12,7 @@ public class Link {
 
 	RouterDescription local_router;
 	RouterDescription remote_router;
+	boolean isClient; //only client side start the router!
 	int portNum;
 	int weight;
 	final Socket connection;
@@ -46,20 +47,29 @@ public class Link {
 	}*/
 
 	public void send(Packet packet) throws IOException{
-	    if (this.connection == null){
-	        System.out.print("connection null");
-        }
-		out.writeObject(packet);
+	    try {
+
+			if (this.connection == null){
+				System.out.print("connection null");
+			}
+			out.writeObject(packet);
+		}catch (Exception e){
+	    	System.err.flush();
+	    	System.err.println("Connection closed by remote router: "+ this.remote_router.simulatedIPAddress);
+	    	throw new IOException("connection closed");
+		}
 	}
 
 
-	public Packet read(){
+	public Packet read()throws IOException{
 		Packet packetFromClient=null;
 		try {
 			packetFromClient = (Packet) in.readObject();
 
 		} catch (Exception e) {
-			e.printStackTrace();
+			System.err.flush();
+			System.err.println("Connection closed by remote router: "+ this.remote_router.simulatedIPAddress);
+			throw new IOException("connection closed");
 		}
 		return packetFromClient;
 	}

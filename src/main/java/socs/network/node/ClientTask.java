@@ -23,25 +23,30 @@ public class ClientTask implements Runnable{
     }
 
     public void run() {
-
         try {
             this.port = handleAcceptedConnection();
-        } catch (Exception e){
-            e.printStackTrace();
-            return;
+            if (port == null) return; //we may dont need the check here
+            System.out.print(">> ");
+
+            //connection set up successfully
+            //now we listen for incoming packages
+            while (true) {
+                Packet packet = this.port.read();
+                processPacket(packet);
+            }
+
+        }catch (Exception e){
+                //remote router is closed.
+                System.err.flush();
+                if (!mapIpLink.containsKey(port.remote_router.simulatedIPAddress)) return;
+                System.err.println("Connection to "+ port.remote_router.simulatedIPAddress +" is closed. ");
+                mapIpLink.remove(port.remote_router.simulatedIPAddress);
+                System.err.println("Deleted this link from ports.");
+                return;
         }
-
-        if (port == null) return; //we may dont need the check here
-
-        //connection set up successfully
-        //now we listen for incoming packages
-        while(true){
-            Packet packet = this.port.read();
-            processPacket(packet);
-        }
-
-
     }
+
+
 
 
     private Link handleAcceptedConnection() throws Exception{
@@ -50,11 +55,12 @@ public class ClientTask implements Runnable{
         RouterDescription remoteRouter = initRemoteRouterDescription(packetFromClient);
         //critical section
         Link link = new Link(this.localRouter, remoteRouter, connection, packetFromClient.weight);
+        link.isClient = false;
         if(mapIpLink.size() < 4){
             this.mapIpLink.put(remoteRouter.simulatedIPAddress, link);
 
             System.out.println("Link created: "+remoteRouter.processPortNumber+" - "+remoteRouter.simulatedIPAddress);
-            System.out.print(">> ");
+            //System.out.print(">> ");
             return link;
         }
         return null;
