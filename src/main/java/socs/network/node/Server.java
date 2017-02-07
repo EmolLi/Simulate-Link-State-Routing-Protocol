@@ -16,9 +16,9 @@ import socs.network.message.Packet;
 
 public class Server {
 	private final ExecutorService threadPool;
-	private final HashMap<String,Link> mapIpLink;
+	volatile private HashMap<String,Link> mapIpLink;
 	private final RouterDescription localRouter;
-	
+
 	public Server(HashMap<String,Link> mapIpLink, RouterDescription localRouter){
 		this.threadPool = Executors.newFixedThreadPool(5);
 		//delete connection here because server has more than 1 connection.
@@ -30,19 +30,20 @@ public class Server {
 		final ServerSocket serverSocket = new ServerSocket(localRouter.processPortNumber);
 
 		System.out.println("Server is running on port: "+localRouter.processPortNumber);
-		
+
 		Thread serverThread = new Thread(new Runnable() {
 			public void run() {
 				try {
 					while(true) {
 						Socket connection = serverSocket.accept();
-
-						if (mapIpLink.size() < 4) {
-							//accept the connection
-							threadPool.submit(new ClientTask(mapIpLink, connection, localRouter));
-						}
-						else {
-							connection.close();
+						synchronized(mapIpLink){
+							if (mapIpLink.size() < 4) {
+								//accept the connection
+								threadPool.submit(new ClientTask(mapIpLink, connection, localRouter));
+							}
+							else {
+								connection.close();
+							}
 						}
 					}
 				} catch (IOException e) {

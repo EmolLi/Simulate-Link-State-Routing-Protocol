@@ -25,8 +25,7 @@ public class Router {
 	private RouterDescription localRouterDescription;
 
 	//assuming that all routers are with 4 ports
-	private final HashMap<String,Link> mapIpLink = new HashMap<String,Link>();
-
+	volatile private HashMap<String,Link> mapIpLink = new HashMap<String,Link>();
 
 	public Router(Configuration config) throws IOException {
 		localRouterDescription = new RouterDescription(config.getString("socs.network.router.ip"),config.getShort("socs.network.router.port"));
@@ -70,42 +69,42 @@ public class Router {
 	 */
 	private void processAttach(String processIP, short processPort, String simulatedDstIP, short weight) throws Exception {
 
-			if(this.localRouterDescription.simulatedIPAddress.equals(simulatedDstIP)){
-				System.err.flush();
-				System.err.print("Cannot connect to yourself!\n");
-				return;
-			}
-			if(mapIpLink.containsKey(simulatedDstIP)){
-				System.err.flush();
-				System.err.print("Already connected to this router.\n");
-				return;
-			}
+		if(this.localRouterDescription.simulatedIPAddress.equals(simulatedDstIP)){
+			System.err.flush();
+			System.err.print("Cannot connect to yourself!\n");
+			return;
+		}
+		if(mapIpLink.containsKey(simulatedDstIP)){
+			System.err.flush();
+			System.err.print("Already connected to this router.\n");
+			return;
+		}
 
-			if(!(this.mapIpLink.size() < 4)){
-				System.err.flush();
-				System.err.print("All ports are used.\n");
-				return;
-			}
+		if(!(this.mapIpLink.size() < 4)){
+			System.err.flush();
+			System.err.print("All ports are used.\n");
+			return;
+		}
 
-			Socket connectionToRemote = new Socket(processIP, processPort);
-			InetAddress local = connectionToRemote.getLocalAddress();
+		Socket connectionToRemote = new Socket(processIP, processPort);
+		InetAddress local = connectionToRemote.getLocalAddress();
 
-			try {
+		try {
+			//we need to pass the weight to the server, so it knows the weight of this link
+			Packet packetToSend = Packet.AttachLinkRequest(this.localRouterDescription.simulatedIPAddress, simulatedDstIP, weight);
+
+			ObjectOutputStream out = new ObjectOutputStream(connectionToRemote.getOutputStream());
+			out.writeObject(packetToSend);
+			RouterDescription remoteRouter = new RouterDescription(simulatedDstIP, processPort);
+
+			//we need to send router description of a connecting router
+			Link link = new Link(this.localRouterDescription, remoteRouter, connectionToRemote, weight);
+			link.isClient = true;
 
 
-				//we need to pass the weight to the server, so it knows the weight of this link
-				Packet packetToSend = Packet.AttachLinkRequest(this.localRouterDescription.simulatedIPAddress, simulatedDstIP, weight);
+			link.send(packetToSend);
 
-				ObjectOutputStream out = new ObjectOutputStream(connectionToRemote.getOutputStream());
-				out.writeObject(packetToSend);
-				RouterDescription remoteRouter = new RouterDescription(simulatedDstIP, processPort);
-
-				//we need to send router description of a connecting router
-				Link link = new Link(this.localRouterDescription, remoteRouter, connectionToRemote, weight);
-				link.isClient = true;
-
-				link.send(packetToSend);
-
+			synchronized(mapIpLink){
 				if(this.mapIpLink.size() < 4){ //you may want to check again because of competition between different
 					// threads.
 					//add critical section
@@ -117,12 +116,13 @@ public class Router {
 					System.err.print("All ports are used.\n");
 					return;
 				}
-
-			} catch (Exception e){
-				System.err.flush();
-				System.err.print("Connection rejected by remote router.\n");
-				return;
 			}
+
+		} catch (Exception e){
+			System.err.flush();
+			System.err.print("Connection rejected by remote router.\n");
+			return;
+		}
 
 
 
@@ -137,8 +137,8 @@ public class Router {
 
 		for (Link link : mapIpLink.values()){
 			//we only start client.
-		    if (link.isClient == false) continue;
-		    try {
+			if (link.isClient == false) continue;
+			try {
 				link.send(new Packet(link.local_router.simulatedIPAddress, link.remote_router.simulatedIPAddress, 0));
 
 				Packet packet = link.read();
@@ -147,9 +147,6 @@ public class Router {
 					System.out.println("received HELLO from "+ packet.simulatedSrcIP);
 					link.remote_router.status = RouterStatus.TWO_WAY;
 					System.out.println("Set "+ link.remote_router.simulatedIPAddress + "to TWO WAY");
-
-
-
 				}
 				else {
 					System.err.println("Expecting packet HELLO");
