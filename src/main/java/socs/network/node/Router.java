@@ -249,7 +249,7 @@ public class Router {
 				} else if (command.equals("neighbors")) {
 					//output neighbors
 					processNeighbors();
-				} else {
+				} else if(command.equals("shutdown")){
 					//invalid command
 					break;
 				}
@@ -258,6 +258,7 @@ public class Router {
 			}
 			isReader.close();
 			br.close();
+			System.out.println("Shuting down");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
