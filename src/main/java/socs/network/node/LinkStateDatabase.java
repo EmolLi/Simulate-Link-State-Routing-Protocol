@@ -27,6 +27,7 @@ public class LinkStateDatabase {
   public void processLSAUPDATEPacket(Packet LSAUPDATE){
     //LSAUPDATE.
   }
+  
   public void updateLSA(LSA lsa) throws Exception{
     String simulatedIP = lsa.routerSimulatedIP;
     int curSeqNum = _store.get(simulatedIP).lsaSeqNumber;
@@ -41,6 +42,14 @@ public class LinkStateDatabase {
     System.out.println("UPDATE SUCCESSFULLY: " + lsa.toString());
   }
 
+  
+  public void newLSA(Link link){
+	  LSA newLsa = new LSA(link.remote_router.simulatedIPAddress, this.getNextLSASeqNum());
+	  LSA oldLsa = _store.get(localRouterDescription.simulatedIPAddress);
+	  newLsa.links.addAll(oldLsa.links);
+	  newLsa.links.add(link.linkDescription);
+  }
+  
   public int getNextLSASeqNum(){
     int lastSeqNum = getLSA(localRouterDescription.simulatedIPAddress).lsaSeqNumber;
     return lastSeqNum + 1;

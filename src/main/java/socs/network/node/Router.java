@@ -1,6 +1,7 @@
 package socs.network.node;
 
 import socs.network.message.LSA;
+import socs.network.message.LinkDescription;
 import socs.network.message.Packet;
 import socs.network.util.Configuration;
 
@@ -13,14 +14,16 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Vector;
 
 
 public class Router {
 	private Socket connection;
 	private final Server server;
 
-	private LinkStateDatabase lsd;
+	private LinkStateDatabase linkStateDatabase;
 
 	private RouterDescription localRouterDescription;
 
@@ -29,8 +32,8 @@ public class Router {
 
 	public Router(Configuration config) throws IOException {
 		localRouterDescription = new RouterDescription(config.getString("socs.network.router.ip"),config.getShort("socs.network.router.port"));
-		lsd = new LinkStateDatabase(localRouterDescription);
-		this.server = new Server(mapIpLink,localRouterDescription);
+		linkStateDatabase = new LinkStateDatabase(localRouterDescription);
+		this.server = new Server(mapIpLink,localRouterDescription, linkStateDatabase);
 	}
 
 	public int getPortsSize(){
@@ -146,6 +149,8 @@ public class Router {
 				if(packet.packetType == 0){
 					System.out.println("received HELLO from "+ packet.simulatedSrcIP);
 					link.remote_router.status = RouterStatus.TWO_WAY;
+					linkStateDatabase.newLSA(link);
+					broadcastToNeighbors(link, linkStateDatabase.getLSA(localRouterDescription.simulatedIPAddress));
 					System.out.println("Set "+ link.remote_router.simulatedIPAddress + "to TWO WAY");
 				}
 				else {
@@ -183,6 +188,25 @@ public class Router {
 		 **/
 	}
 
+
+	private void broadcastToNeighbors(Link link, LSA lsa) {
+
+		LSA neighbors = linkStateDatabase.getLSA(localRouterDescription.simulatedIPAddress);
+		for(LinkDescription neighbor : neighbors.links){
+			Link link1 = mapIpLink.get(neighbor.remoteRouter);
+			if(link != link1){
+				ArrayList<LSA> lsas = new ArrayList<LSA>();
+				lsas.add(lsa);
+				Packet packet = Packet.LSAUPDATE(localRouterDescription.simulatedIPAddress, link1.remote_router.simulatedIPAddress,lsas);
+				try {
+					link1.send(packet);
+				} catch (IOException e) {
+					System.err.println("Mistake in sending LSAUPDATE");
+					e.printStackTrace();
+				}
+			}
+		}
+	}
 
 	/**
 	 * attach the link to the remote router, which is identified by the given simulated ip;

@@ -1,5 +1,6 @@
 package socs.network.node;
 
+import socs.network.message.LSA;
 import socs.network.message.Packet;
 
 import java.io.IOException;
@@ -15,11 +16,13 @@ public class ClientTask implements Runnable{
 	private final RouterDescription localRouter;
 	private final HashMap<String,Link> mapIpLink;
 	private Link port;
+	volatile LinkStateDatabase db;
 
-	public ClientTask(HashMap<String,Link> mapIpLink, Socket connection, RouterDescription localRouter){
+	public ClientTask(HashMap<String,Link> mapIpLink, Socket connection, RouterDescription localRouter, LinkStateDatabase db){
 		this.connection = connection;
 		this.localRouter = localRouter;
 		this.mapIpLink = mapIpLink;
+		this.db = db;
 	}
 
 	public void run() {
@@ -111,7 +114,7 @@ public class ClientTask implements Runnable{
 			gotHelloMsg(packet);
 			break;
 		case 1:
-			//gotLSAUpdateMsg(packet);
+			gotLSAUpdateMsg(packet);
 			break;
 
 			//set up connection
@@ -129,6 +132,15 @@ public class ClientTask implements Runnable{
 		}
 	}
 
+
+	private void gotLSAUpdateMsg(Packet packet) {
+		LinkStateDatabase db = this.db;
+		for(LSA lsa : packet.lsaArray){
+			if(lsa.lsaSeqNumber < db.getLSA(packet.simulatedSrcIP).lsaSeqNumber){
+				
+			}
+		}
+	}
 
 	private void gotHelloMsg(Packet packet){
 		System.out.println("received HELLO from "+ packet.simulatedSrcIP);

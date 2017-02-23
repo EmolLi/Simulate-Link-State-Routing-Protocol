@@ -18,12 +18,14 @@ public class Server {
 	private final ExecutorService threadPool;
 	volatile private HashMap<String,Link> mapIpLink;
 	private final RouterDescription localRouter;
+	volatile private LinkStateDatabase db;
 
-	public Server(HashMap<String,Link> mapIpLink, RouterDescription localRouter){
+	public Server(HashMap<String,Link> mapIpLink, RouterDescription localRouter, LinkStateDatabase db){
 		this.threadPool = Executors.newFixedThreadPool(5);
 		//delete connection here because server has more than 1 connection.
 		this.localRouter = localRouter;
 		this.mapIpLink = mapIpLink;
+		this.db = db;
 	}
 
 	public void startServer() throws IOException {
@@ -39,7 +41,7 @@ public class Server {
 						synchronized(mapIpLink){
 							if (mapIpLink.size() < 4) {
 								//accept the connection
-								threadPool.submit(new ClientTask(mapIpLink, connection, localRouter));
+								threadPool.submit(new ClientTask(mapIpLink, connection, localRouter, db));
 							}
 							else {
 								connection.close();
