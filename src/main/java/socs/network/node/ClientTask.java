@@ -157,6 +157,8 @@ public class ClientTask implements Runnable{
 	
 	
 	private void forwardToNeighbors(Link link_to_ignore, LSA linkStateAdvertisement) {
+		System.out.println("Received LSAUPDATE from neighbor");
+		
 		LSA neighbors = linkStateDatabase.getLSA(localRouter.simulatedIPAddress);
 	
 		for(LinkDescription neighbor : neighbors.links){

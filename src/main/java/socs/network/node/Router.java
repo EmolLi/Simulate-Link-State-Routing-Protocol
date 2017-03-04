@@ -190,22 +190,30 @@ public class Router {
 	}
 
 
-	private void broadcastToNeighbors(Link link_to_ignore, LSA linkStateAdvertisement) {
-		LSA neighbors = linkStateDatabase.getLSA(localRouterDescription.simulatedIPAddress);
-	
+	private void broadcastToNeighbors(Link link_to_ignore, LSA lsa) {
+		LSA neighbors = linkStateDatabase.getLSA(localRouterDescription.simulatedIPAddress);		
+
+		System.out.println(neighbors);
 		for(LinkDescription neighbor : neighbors.links){
+			if(neighbor.remoteRouter.compareTo(localRouterDescription.simulatedIPAddress) == 0){
+				continue; //we don't want to sent to ourselves
+			}
+
 			Link link_of_neighbor = mapIpLink.get(neighbor.remoteRouter);
-			
 			if(link_to_ignore != link_of_neighbor){
 				ArrayList<LSA> linkStateAdvertisements = new ArrayList<LSA>();//in case we need array
-				linkStateAdvertisements.add(linkStateAdvertisement);
+				linkStateAdvertisements.add(lsa);
 				Packet packet = Packet.LSAUPDATE(localRouterDescription.simulatedIPAddress, link_of_neighbor.remote_router.simulatedIPAddress,linkStateAdvertisements);
+				System.out.println("Send LSAUPDATE to: "+link_of_neighbor.remote_router.simulatedIPAddress);
 				try {
 					link_of_neighbor.send(packet);
 				} catch (IOException e) {
 					System.err.println("Mistake in sending LSAUPDATE");
 					e.printStackTrace();
 				}
+			}
+			else{
+				System.out.println("Don't send LSAUPDATE to: "+link_to_ignore.remote_router.simulatedIPAddress);
 			}
 		}
 	}

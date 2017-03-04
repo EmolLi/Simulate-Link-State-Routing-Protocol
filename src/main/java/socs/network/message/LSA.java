@@ -19,10 +19,12 @@ public class LSA implements Serializable {
   @Override
   public String toString() {
     StringBuffer sb = new StringBuffer();
-    sb.append(routerSimulatedIP + ":").append(lsaSeqNumber + "\n");
+    sb.append("routerSimulatedIp: "+routerSimulatedIP).append(" lsaSeqNumber: "+lsaSeqNumber + "\n");
+    sb.append("[");
     for (LinkDescription ld : links) {
       sb.append(ld);
     }
+    sb.append("]");
     sb.append("\n");
     return sb.toString();
   }
