@@ -149,9 +149,11 @@ public class Router {
 				if(packet.packetType == 0){
 					System.out.println("received HELLO from "+ packet.simulatedSrcIP);
 					link.remote_router.status = RouterStatus.TWO_WAY;
-					
+
+
 					linkStateDatabase.newLSA(link);//we insert new neighbor into our database
-					broadcastToNeighbors(link, linkStateDatabase.getLSA(localRouterDescription.simulatedIPAddress));
+					/**
+					broadcastToNeighbors(link, linkStateDatabase.getLSA(localRouterDescription.simulatedIPAddress));**/
 					System.out.println("Set "+ link.remote_router.simulatedIPAddress + "to TWO WAY");
 				}
 				else {
@@ -190,6 +192,11 @@ public class Router {
 	}
 
 
+	/**
+	 *
+	 * @param link_to_ignore if we are forwarding a message, we dont send to the guy who sent us the packet
+	 * @param lsa
+	 */
 	private void broadcastToNeighbors(Link link_to_ignore, LSA lsa) {
 
 		LSA neighbors = linkStateDatabase.getLSA(localRouterDescription.simulatedIPAddress);
@@ -220,14 +227,21 @@ public class Router {
 	 */
 	private void processConnect(String processIP, short processPort, String simulatedIP, short weight) {
 
+		//TODO: check if we have run start before, if not return
+
+		//like attach, attach to the remote router if we can. (create the link)
+
+		//like start, but we only send hello on this one link (two way communication on this link)
+
 	}
 
 	/**
 	 * output the neighbors of the routers
 	 */
 	private void processNeighbors() {
-		for (Link link : mapIpLink.values()){
-			System.out.println(link.remote_router.simulatedIPAddress);
+		for (LinkDescription neighbor : linkStateDatabase.getNeighbors()){
+			//our local router is also in the neighbor list, and it has weight 0
+			if (neighbor.weight != 0)System.out.println(neighbor.remoteRouter + "    distance: "+ neighbor.weight);
 		}
 	}
 

@@ -4,7 +4,9 @@ import socs.network.message.LSA;
 import socs.network.message.LinkDescription;
 import socs.network.message.Packet;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 
 public class LinkStateDatabase {
 
@@ -17,6 +19,14 @@ public class LinkStateDatabase {
     localRouterDescription = routerDescription;
     LSA l = initLinkStateDatabase();
     _store.put(l.routerSimulatedIP, l);
+  }
+
+  /**
+   *
+   * @return {LinkedList<LinkDescription>} the neighbors of the local routers
+   */
+  public LinkedList<LinkDescription> getNeighbors(){
+    return _store.get(localRouterDescription.simulatedIPAddress).links;
   }
 
   public LSA getLSA(String routerSimulatedIP){
