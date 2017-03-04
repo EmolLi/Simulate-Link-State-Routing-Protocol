@@ -136,9 +136,13 @@ public class ClientTask implements Runnable{
 	private void gotLSAUpdateMsg(Packet packet) {
 		LinkStateDatabase db = this.db;
 		for(LSA lsa : packet.lsaArray){
-			if(lsa.lsaSeqNumber < db.getLSA(packet.simulatedSrcIP).lsaSeqNumber){
-				
+			if(lsa.lsaSeqNumber < db.getLSA(lsa.routerSimulatedIP).lsaSeqNumber){
+				return;
 			}
+			
+			//update db
+			
+			//forward packet
 		}
 	}
 

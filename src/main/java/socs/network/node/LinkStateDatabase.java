@@ -48,6 +48,7 @@ public class LinkStateDatabase {
 	  LSA oldLsa = _store.get(localRouterDescription.simulatedIPAddress);
 	  newLsa.links.addAll(oldLsa.links);
 	  newLsa.links.add(link.linkDescription);
+	  _store.put(localRouterDescription.simulatedIPAddress, newLsa);
   }
   
   public int getNextLSASeqNum(){
