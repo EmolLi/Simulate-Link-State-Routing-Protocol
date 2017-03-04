@@ -14,6 +14,6 @@ public class LinkDescription implements Serializable {
   }
 
   public String toString() {
-    return remoteRouter + ","  + portNum + "," + weight;
+    return  "remoteRouter: "+remoteRouter + " portNumber: "  + portNum + " weight: " + weight+" ";
   }
 }

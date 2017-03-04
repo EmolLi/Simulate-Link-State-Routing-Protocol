@@ -151,7 +151,7 @@ public class Router {
 					link.remote_router.status = RouterStatus.TWO_WAY;
 					
 					linkStateDatabase.newLSA(link);//we insert new neighbor into our database
-					//broadcastToNeighbors(link, linkStateDatabase.getLSA(localRouterDescription.simulatedIPAddress));
+					broadcastToNeighbors(link, linkStateDatabase.getLSA(localRouterDescription.simulatedIPAddress));
 					System.out.println("Set "+ link.remote_router.simulatedIPAddress + "to TWO WAY");
 				}
 				else {
@@ -190,22 +190,21 @@ public class Router {
 	}
 
 
-	/**
-	 *
-	 * @param link_to_ignore if we are forwarding a message, we dont send to the guy who sent us the packet
-	 * @param lsa
-	 */
-	/**
-	private void broadcastToNeighbors(Link link_to_ignore, LSA linkStateAdvertisement) {
+	private void broadcastToNeighbors(Link link_to_ignore, LSA lsa) {
 		LSA neighbors = linkStateDatabase.getLSA(localRouterDescription.simulatedIPAddress);
 
+		System.out.println(neighbors);
 		for(LinkDescription neighbor : neighbors.links){
+			if(neighbor.remoteRouter.compareTo(localRouterDescription.simulatedIPAddress) == 0){
+				continue; //we don't want to sent to ourselves
+			}
+
 			Link link_of_neighbor = mapIpLink.get(neighbor.remoteRouter);
-			
 			if(link_to_ignore != link_of_neighbor){
 				ArrayList<LSA> linkStateAdvertisements = new ArrayList<LSA>();//in case we need array
-				linkStateAdvertisements.add(linkStateAdvertisement);
+				linkStateAdvertisements.add(lsa);
 				Packet packet = Packet.LSAUPDATE(localRouterDescription.simulatedIPAddress, link_of_neighbor.remote_router.simulatedIPAddress,linkStateAdvertisements);
+				System.out.println("Send LSAUPDATE to: "+link_of_neighbor.remote_router.simulatedIPAddress);
 				try {
 					link_of_neighbor.send(packet);
 				} catch (IOException e) {
@@ -213,9 +212,12 @@ public class Router {
 					e.printStackTrace();
 				}
 			}
+			else{
+				System.out.println("Don't send LSAUPDATE to: "+link_to_ignore.remote_router.simulatedIPAddress);
+			}
 		}
 	}
-***/
+
 	/**
 	 * attach the link to the remote router, which is identified by the given simulated ip;
 	 * to establish the connection via socket, you need to indentify the process IP and process Port;
@@ -241,9 +243,6 @@ public class Router {
 			//our local router is also in the neighbor list, and it has weight 0
 			if (neighbor.weight != 0)System.out.println(neighbor.remoteRouter + "    distance: "+ neighbor.weight);
 		}
-
-		//test run graph here
-        linkStateDatabase.convertDataBaseToGraph();
 	}
 
 	/**
