@@ -151,7 +151,7 @@ public class Router {
 					link.remote_router.status = RouterStatus.TWO_WAY;
 					
 					linkStateDatabase.newLSA(link);//we insert new neighbor into our database
-					broadcastToNeighbors(link, linkStateDatabase.getLSA(localRouterDescription.simulatedIPAddress));
+					//broadcastToNeighbors(link, linkStateDatabase.getLSA(localRouterDescription.simulatedIPAddress));
 					System.out.println("Set "+ link.remote_router.simulatedIPAddress + "to TWO WAY");
 				}
 				else {
@@ -195,6 +195,7 @@ public class Router {
 	 * @param link_to_ignore if we are forwarding a message, we dont send to the guy who sent us the packet
 	 * @param lsa
 	 */
+	/**
 	private void broadcastToNeighbors(Link link_to_ignore, LSA linkStateAdvertisement) {
 		LSA neighbors = linkStateDatabase.getLSA(localRouterDescription.simulatedIPAddress);
 
@@ -214,7 +215,7 @@ public class Router {
 			}
 		}
 	}
-
+***/
 	/**
 	 * attach the link to the remote router, which is identified by the given simulated ip;
 	 * to establish the connection via socket, you need to indentify the process IP and process Port;
@@ -240,6 +241,9 @@ public class Router {
 			//our local router is also in the neighbor list, and it has weight 0
 			if (neighbor.weight != 0)System.out.println(neighbor.remoteRouter + "    distance: "+ neighbor.weight);
 		}
+
+		//test run graph here
+        linkStateDatabase.convertDataBaseToGraph();
 	}
 
 	/**
