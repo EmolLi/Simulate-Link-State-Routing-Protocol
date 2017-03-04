@@ -1,11 +1,13 @@
 package socs.network.node;
 
 import socs.network.message.LSA;
+import socs.network.message.LinkDescription;
 import socs.network.message.Packet;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -16,13 +18,13 @@ public class ClientTask implements Runnable{
 	private final RouterDescription localRouter;
 	private final HashMap<String,Link> mapIpLink;
 	private Link port;
-	volatile LinkStateDatabase db;
+	volatile LinkStateDatabase linkStateDatabase;
 
 	public ClientTask(HashMap<String,Link> mapIpLink, Socket connection, RouterDescription localRouter, LinkStateDatabase db){
 		this.connection = connection;
 		this.localRouter = localRouter;
 		this.mapIpLink = mapIpLink;
-		this.db = db;
+		this.linkStateDatabase = db;
 	}
 
 	public void run() {
@@ -134,16 +136,48 @@ public class ClientTask implements Runnable{
 
 
 	private void gotLSAUpdateMsg(Packet packet) {
-		LinkStateDatabase db = this.db;
+		LinkStateDatabase db = this.linkStateDatabase;
 		for(LSA lsa : packet.lsaArray){
-			if(lsa.lsaSeqNumber < db.getLSA(lsa.routerSimulatedIP).lsaSeqNumber){
+			if(isAlreadyInDb(db, lsa)){
 				return;
 			}
-			
-			//update db
-			
-			//forward packet
+			else{
+				//we need to update DB
+				try {
+					db.updateLSA(lsa);
+				} catch (Exception e) {
+					System.err.println("We could not update LSA for some reason");
+					e.printStackTrace();
+				}
+				Link link_to_ignore = mapIpLink.get(packet.simulatedSrcIP);
+				forwardToNeighbors(link_to_ignore, lsa);
+			}			
 		}
+	}
+	
+	
+	private void forwardToNeighbors(Link link_to_ignore, LSA linkStateAdvertisement) {
+		LSA neighbors = linkStateDatabase.getLSA(localRouter.simulatedIPAddress);
+	
+		for(LinkDescription neighbor : neighbors.links){
+			Link link_of_neighbor = mapIpLink.get(neighbor.remoteRouter);
+			
+			if(link_to_ignore != link_of_neighbor){
+				ArrayList<LSA> linkStateAdvertisements = new ArrayList<LSA>();//in case we need array
+				linkStateAdvertisements.add(linkStateAdvertisement);
+				Packet packet = Packet.LSAUPDATE(localRouter.simulatedIPAddress, link_of_neighbor.remote_router.simulatedIPAddress,linkStateAdvertisements);
+				try {
+					link_of_neighbor.send(packet);
+				} catch (IOException e) {
+					System.err.println("Mistake in sending LSAUPDATE");
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	private boolean isAlreadyInDb(LinkStateDatabase db, LSA lsa) {
+		return lsa.lsaSeqNumber < db.getLSA(lsa.routerSimulatedIP).lsaSeqNumber;
 	}
 
 	private void gotHelloMsg(Packet packet){

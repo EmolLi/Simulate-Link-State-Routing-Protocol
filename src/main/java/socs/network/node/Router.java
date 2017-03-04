@@ -190,17 +190,16 @@ public class Router {
 	}
 
 
-	private void broadcastToNeighbors(Link link_to_ignore, LSA lsa) {
-
+	private void broadcastToNeighbors(Link link_to_ignore, LSA linkStateAdvertisement) {
 		LSA neighbors = linkStateDatabase.getLSA(localRouterDescription.simulatedIPAddress);
-		
+	
 		for(LinkDescription neighbor : neighbors.links){
 			Link link_of_neighbor = mapIpLink.get(neighbor.remoteRouter);
 			
 			if(link_to_ignore != link_of_neighbor){
-				ArrayList<LSA> lsas = new ArrayList<LSA>();
-				lsas.add(lsa);
-				Packet packet = Packet.LSAUPDATE(localRouterDescription.simulatedIPAddress, link_of_neighbor.remote_router.simulatedIPAddress,lsas);
+				ArrayList<LSA> linkStateAdvertisements = new ArrayList<LSA>();//in case we need array
+				linkStateAdvertisements.add(linkStateAdvertisement);
+				Packet packet = Packet.LSAUPDATE(localRouterDescription.simulatedIPAddress, link_of_neighbor.remote_router.simulatedIPAddress,linkStateAdvertisements);
 				try {
 					link_of_neighbor.send(packet);
 				} catch (IOException e) {
