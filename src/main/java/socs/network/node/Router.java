@@ -149,9 +149,6 @@ public class Router {
 				if(packet.packetType == 0){
 					System.out.println("received HELLO from "+ packet.simulatedSrcIP);
 					link.remote_router.status = RouterStatus.TWO_WAY;
-					
-					linkStateDatabase.newLSA(link);//we insert new neighbor into our database
-					broadcastToNeighbors(link, linkStateDatabase.getLSA(localRouterDescription.simulatedIPAddress));
 					System.out.println("Set "+ link.remote_router.simulatedIPAddress + "to TWO WAY");
 				}
 				else {
@@ -159,38 +156,24 @@ public class Router {
 				}
 
 				link.send(new Packet(link.local_router.simulatedIPAddress, link.remote_router.simulatedIPAddress, 0));
+				
+				performLSAUPDATE(link);
 
 			}catch (Exception e){
 				System.err.println("Error in process start");
 				e.printStackTrace();
 			}
-
-
 		}
+	}
 
-		//LSA database update
-
-		/**
-		LSA lsa = new LSA(this.localRouterDescription.simulatedIPAddress, lsd.getNextLSASeqNum());
-		for (Link link : mapIpLink.values()){
-			lsa.links.add(link.linkDescription);
-		}
-
-		try {
-			//update local lsa
-			lsd.updateLSA(lsa);
-
-			//broadcast LSAUPDATE
-		}catch (Exception e){
-			System.err.println("NO NEED To UPDATE: " + lsa.toString());
-		}
-
-		//boardcast LSAUPDATE
-		 **/
+	private void performLSAUPDATE(Link link) {
+		linkStateDatabase.newLSA(link);//we insert new neighbor into our database
+		broadcastToNeighbors(linkStateDatabase.getLSA(localRouterDescription.simulatedIPAddress));
 	}
 
 
-	private void broadcastToNeighbors(Link link_to_ignore, LSA lsa) {
+	//we use this after hello, so we broadcast to everyone including the source
+	private void broadcastToNeighbors(LSA lsa) {
 		LSA neighbors = linkStateDatabase.getLSA(localRouterDescription.simulatedIPAddress);
 
 		System.out.println(neighbors);
@@ -200,20 +183,15 @@ public class Router {
 			}
 
 			Link link_of_neighbor = mapIpLink.get(neighbor.remoteRouter);
-			if(link_to_ignore != link_of_neighbor){
-				ArrayList<LSA> linkStateAdvertisements = new ArrayList<LSA>();//in case we need array
-				linkStateAdvertisements.add(lsa);
-				Packet packet = Packet.LSAUPDATE(localRouterDescription.simulatedIPAddress, link_of_neighbor.remote_router.simulatedIPAddress,linkStateAdvertisements);
-				System.out.println("Send LSAUPDATE to: "+link_of_neighbor.remote_router.simulatedIPAddress);
-				try {
-					link_of_neighbor.send(packet);
-				} catch (IOException e) {
-					System.err.println("Mistake in sending LSAUPDATE");
-					e.printStackTrace();
-				}
-			}
-			else{
-				System.out.println("Don't send LSAUPDATE to: "+link_to_ignore.remote_router.simulatedIPAddress);
+			ArrayList<LSA> linkStateAdvertisements = new ArrayList<LSA>();//in case we need array
+			linkStateAdvertisements.add(lsa);
+			Packet packet = Packet.LSAUPDATE(localRouterDescription.simulatedIPAddress, link_of_neighbor.remote_router.simulatedIPAddress,linkStateAdvertisements);
+			System.out.println("Send LSAUPDATE to: "+link_of_neighbor.remote_router.simulatedIPAddress);
+			try {
+				link_of_neighbor.send(packet);
+			} catch (IOException e) {
+				System.err.println("Mistake in sending LSAUPDATE");
+				e.printStackTrace();
 			}
 		}
 	}
