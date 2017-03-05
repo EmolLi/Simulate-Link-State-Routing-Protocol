@@ -41,7 +41,7 @@ public class Server {
 						synchronized(mapIpLink){
 							if (mapIpLink.size() < 4) {
 								//accept the connection
-								threadPool.submit(new ClientTask(mapIpLink, connection, localRouter, db));
+								threadPool.submit(new ServerTask(mapIpLink, connection, localRouter, db));
 							}
 							else {
 								connection.close();

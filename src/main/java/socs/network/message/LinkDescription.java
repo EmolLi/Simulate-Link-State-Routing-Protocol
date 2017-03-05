@@ -3,17 +3,17 @@ package socs.network.message;
 import java.io.Serializable;
 
 public class LinkDescription implements Serializable {
-  public String remoteRouter;
+  public String remoteIP;
   public int portNum;
   public int weight;
 
   public LinkDescription(String remoteRouter, int portNum, int weight){
-    this.remoteRouter = remoteRouter;
+    this.remoteIP = remoteRouter;
     this.portNum = portNum;
     this.weight = weight;
   }
 
   public String toString() {
-    return  "remoteRouter: "+remoteRouter + " portNumber: "  + portNum + " weight: " + weight+" ";
+    return  "remoteRouter: "+remoteIP + " portNumber: "  + portNum + " weight: " + weight+" ";
   }
 }

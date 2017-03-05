@@ -31,27 +31,27 @@ public class LinkStateDatabase {
     return _store.get(routerSimulatedIP);
   }
 
-
-  public void processLSAUPDATEPacket(Packet LSAUPDATE){
-    //LSAUPDATE.
-  }
   
   public void updateLSA(LSA lsa) throws Exception{
     String simulatedIP = lsa.routerSimulatedIP;
-    int curSeqNum = _store.get(simulatedIP).lsaSeqNumber;
-    int newSeqNum = lsa.lsaSeqNumber;
+    if(_store.containsKey(simulatedIP)){
+        int curSeqNum = _store.get(simulatedIP).lsaSeqNumber;
+        int newSeqNum = lsa.lsaSeqNumber;
 
-    if (curSeqNum >= newSeqNum){
-      //no need to update
-      throw new Exception("No need to update LSA!");
+        if (curSeqNum >= newSeqNum){
+          return;
+        }
+        _store.put(simulatedIP, lsa);
+        System.out.println("UPDATE SUCCESSFULLY: " + lsa.toString());
     }
-
-    _store.put(simulatedIP, lsa);
-    System.out.println("UPDATE SUCCESSFULLY: " + lsa.toString());
+    else{
+        _store.put(simulatedIP, lsa);
+        System.out.println("INCLUDED NEW ENTRY INTO DB: " + lsa.toString());    	
+    }
   }
 
   
-  public void newLSA(Link link){
+  public void addNewLinkToDB(Link link){
 	  LSA newLsa = new LSA(localRouterDescription.simulatedIPAddress, this.getNextLSASeqNum());
 	  LSA oldLsa = _store.get(localRouterDescription.simulatedIPAddress);
 	  newLsa.links.addAll(oldLsa.links);
@@ -87,7 +87,7 @@ public class LinkStateDatabase {
     for (LSA lsa: _store.values()) {
       sb.append(lsa.routerSimulatedIP).append("(" + lsa.lsaSeqNumber + ")").append(":\t");
       for (LinkDescription ld : lsa.links) {
-        sb.append(ld.remoteRouter).append(",").append(ld.portNum).append(",").
+        sb.append(ld.remoteIP).append(",").append(ld.portNum).append(",").
                 append(ld.weight).append("\t");
       }
       sb.append("\n");
@@ -107,7 +107,7 @@ public class LinkStateDatabase {
           graph.put(lsa.routerSimulatedIP, new HashMap<String, Integer>());
         }
 
-        graph.get(lsa.routerSimulatedIP).put(link.remoteRouter, link.weight);
+        graph.get(lsa.routerSimulatedIP).put(link.remoteIP, link.weight);
       }
 
     }
@@ -150,4 +150,18 @@ public class LinkStateDatabase {
 21
         22      return dist[], prev[]
 **/
+
+public boolean hasEntryFor(String routerSimulatedIP) {
+	return _store.containsKey(routerSimulatedIP);
+}
+
+	public ArrayList<LSA> getLSAs() {
+		ArrayList<LSA> lsas = new ArrayList<LSA>();
+		synchronized(_store){
+			for(String ip : _store.keySet()){
+				lsas.add(_store.get(ip));
+			}
+		}
+		return lsas;
+	}
 }

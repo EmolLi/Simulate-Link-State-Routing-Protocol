@@ -8,15 +8,9 @@ import socs.network.util.Configuration;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.InetAddress;
-import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Vector;
 
 
 public class Router {
@@ -71,7 +65,6 @@ public class Router {
 	 * NOTE: this command should not trigger link database synchronization
 	 */
 	private void processAttach(String processIP, short processPort, String simulatedDstIP, short weight) throws Exception {
-
 		if(this.localRouterDescription.simulatedIPAddress.equals(simulatedDstIP)){
 			System.err.flush();
 			System.err.print("Cannot connect to yourself!\n");
@@ -90,75 +83,19 @@ public class Router {
 		}
 
 		Socket connectionToRemote = new Socket(processIP, processPort);
-		InetAddress local = connectionToRemote.getLocalAddress();
-
-		try {
-			//we need to pass the weight to the server, so it knows the weight of this link
-			Packet packetToSend = Packet.AttachLinkRequest(this.localRouterDescription.simulatedIPAddress, simulatedDstIP, weight);
-
-			ObjectOutputStream out = new ObjectOutputStream(connectionToRemote.getOutputStream());
-			out.writeObject(packetToSend);
-			RouterDescription remoteRouter = new RouterDescription(simulatedDstIP, processPort);
-
-			//we need to send router description of a connecting router
-			Link link = new Link(this.localRouterDescription, remoteRouter, connectionToRemote, weight);
-			link.isClient = true;
-
-
-			link.send(packetToSend);
-
-			synchronized(mapIpLink){
-				if(this.mapIpLink.size() < 4){ //you may want to check again because of competition between different
-					// threads.
-					//add critical section
-					this.mapIpLink.put(simulatedDstIP, link);
-				}
-				else{
-					//dont throw exception
-					System.err.flush();
-					System.err.print("All ports are used.\n");
-					return;
-				}
-			}
-
-		} catch (Exception e){
-			System.err.flush();
-			System.err.print("Connection rejected by remote router.\n");
-			return;
-		}
-
-
-
-
-		System.out.println("Connected to server with:" + simulatedDstIP);
+		Thread clientSetup = new Thread( new ClientTask(mapIpLink, connectionToRemote, localRouterDescription, linkStateDatabase, weight, simulatedDstIP));
+		clientSetup.start();
 	}
 
 	/**
-	 * broadcast Hello to neighbors
+	 * Starts HELLO protocol
 	 */
 	private void processStart() {
-
-		for (Link link : mapIpLink.values()){
+		for (Link connection : mapIpLink.values()){
 			//we only start client.
-			if (link.isClient == false) continue;
+			if (connection.isClient == false) continue;
 			try {
-				link.send(new Packet(link.local_router.simulatedIPAddress, link.remote_router.simulatedIPAddress, 0));
-
-				Packet packet = link.read();
-
-				if(packet.packetType == 0){
-					System.out.println("received HELLO from "+ packet.simulatedSrcIP);
-					link.remote_router.status = RouterStatus.TWO_WAY;
-					System.out.println("Set "+ link.remote_router.simulatedIPAddress + "to TWO WAY");
-				}
-				else {
-					System.err.println("Expecting packet HELLO");
-				}
-
-				link.send(new Packet(link.local_router.simulatedIPAddress, link.remote_router.simulatedIPAddress, 0));
-				
-				performLSAUPDATE(link);
-
+				sendHELLO(connection);
 			}catch (Exception e){
 				System.err.println("Error in process start");
 				e.printStackTrace();
@@ -166,35 +103,21 @@ public class Router {
 		}
 	}
 
-	private void performLSAUPDATE(Link link) {
-		linkStateDatabase.newLSA(link);//we insert new neighbor into our database
-		broadcastToNeighbors(linkStateDatabase.getLSA(localRouterDescription.simulatedIPAddress));
+	/**
+	 * Start HELLO protocol
+	 * @param connection
+	 * @throws IOException
+	 */
+	//TODO: Make sure that we can't send HELLO twice
+	private void sendHELLO(Link connection) throws IOException {
+		connection.send(new Packet(connection.local_router.simulatedIPAddress, connection.remote_router.simulatedIPAddress, 0));
 	}
-
-
-	//we use this after hello, so we broadcast to everyone including the source
-	private void broadcastToNeighbors(LSA lsa) {
-		LSA neighbors = linkStateDatabase.getLSA(localRouterDescription.simulatedIPAddress);
-
-		System.out.println(neighbors);
-		for(LinkDescription neighbor : neighbors.links){
-			if(neighbor.remoteRouter.compareTo(localRouterDescription.simulatedIPAddress) == 0){
-				continue; //we don't want to sent to ourselves
-			}
-
-			Link link_of_neighbor = mapIpLink.get(neighbor.remoteRouter);
-			ArrayList<LSA> linkStateAdvertisements = new ArrayList<LSA>();//in case we need array
-			linkStateAdvertisements.add(lsa);
-			Packet packet = Packet.LSAUPDATE(localRouterDescription.simulatedIPAddress, link_of_neighbor.remote_router.simulatedIPAddress,linkStateAdvertisements);
-			System.out.println("Send LSAUPDATE to: "+link_of_neighbor.remote_router.simulatedIPAddress);
-			try {
-				link_of_neighbor.send(packet);
-			} catch (IOException e) {
-				System.err.println("Mistake in sending LSAUPDATE");
-				e.printStackTrace();
-			}
-		}
-	}
+	
+	/**
+	 * This is LSAUPDATE protocol used to send links to neighboring routers
+	 * @param link
+	 */
+	
 
 	/**
 	 * attach the link to the remote router, which is identified by the given simulated ip;
@@ -218,8 +141,7 @@ public class Router {
 	 */
 	private void processNeighbors() {
 		for (LinkDescription neighbor : linkStateDatabase.getNeighbors()){
-			//our local router is also in the neighbor list, and it has weight 0
-			if (neighbor.weight != 0)System.out.println(neighbor.remoteRouter + "    distance: "+ neighbor.weight);
+			if (neighbor.weight != 0)System.out.println(neighbor.remoteIP + "    distance: "+ neighbor.weight);
 		}
 	}
 
@@ -271,6 +193,9 @@ public class Router {
 				} else if(command.equals("shutdown")){
 					//invalid command
 					break;
+				}
+				else if(command.equals("db")){
+					System.out.println(this.linkStateDatabase);
 				}
 				System.out.print(">> ");
 				command = br.readLine();
