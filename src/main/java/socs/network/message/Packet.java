@@ -48,5 +48,16 @@ public class Packet implements Serializable {
 		packet.weight = weight;
 		return packet;
 	}
-
+	
+	public String print(){
+		StringBuilder str = new StringBuilder();
+		str.append(" srcProcessIp: "+this.srcProcessIP);
+		str.append(" srcProcessPort: "+this.srcProcessPort);
+		str.append(" simulatedSrcIP: "+this.simulatedSrcIP);
+		str.append(" simylatedDstIP: "+this.simulatedDstIP);
+		str.append(" packetType: "+this.packetType); //0 - HELLO, 1 - LinkState Update
+		str.append(" routerID: "+this.routerID);
+		str.append(" neighborID: "+this.neighborID); //neighbor's simulated IP address
+		return str.toString();	
+	}
 }

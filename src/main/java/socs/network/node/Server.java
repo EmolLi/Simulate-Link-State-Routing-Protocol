@@ -54,11 +54,5 @@ public class Server {
 			}
 		});
 		serverThread.start();
-
-
-
 	}
-
-
-
 }

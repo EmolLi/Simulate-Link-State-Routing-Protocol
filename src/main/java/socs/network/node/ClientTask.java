@@ -138,12 +138,16 @@ public class ClientTask implements Runnable{
 	private void gotLSAUpdateMsg(Packet packet) {
 		System.out.println("Got LSUPDATE");
 		LinkStateDatabase db = this.linkStateDatabase;
+		
+		System.out.println(packet.print());
 		for(LSA lsa : packet.lsaArray){
+			System.out.println(lsa);
 			if(isAlreadyInDb(db, lsa)){
 				return;
 			}
 			else{
 				//we need to update DB
+				System.out.println("Here");
 				try {
 					db.updateLSA(lsa);
 				} catch (Exception e) {
@@ -151,6 +155,7 @@ public class ClientTask implements Runnable{
 					e.printStackTrace();
 				}
 				Link linkOverWhichWeReceivedLSA = mapIpLink.get(packet.simulatedSrcIP);
+				
 				forwardToNeighbors(linkOverWhichWeReceivedLSA, lsa);
 			}			
 		}
@@ -188,7 +193,7 @@ public class ClientTask implements Runnable{
 	}
 	
 	private boolean isAlreadyInDb(LinkStateDatabase db, LSA lsa) {
-		return lsa.lsaSeqNumber < db.getLSA(lsa.routerSimulatedIP).lsaSeqNumber;
+		return lsa.lsaSeqNumber < db.getLSA(lsa.routerSimulatedIP).lsaSeqNumber;//not in LSA already because it is coming from different router
 	}
 
 	private void gotHelloMsg(Packet packet){
