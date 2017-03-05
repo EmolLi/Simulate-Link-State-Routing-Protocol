@@ -16,6 +16,19 @@ public class LSA implements Serializable {
     this.lsaSeqNumber = lsaSeqNumber;
   }
 
+  /**
+   * get the link of a certain neighbor
+   * @param neighborRouterSimulatedIp
+   * @return the link to the neighborRouterSimulatedIp
+   */
+  public LinkDescription getLinkDescription(String neighborRouterSimulatedIp)throws Exception{
+    for (LinkDescription link : links){
+      if (link.remoteRouter.equals(neighborRouterSimulatedIp)) return link;
+    }
+    throw new Exception("Neighbor not found!");
+  }
+
+
   @Override
   public String toString() {
     StringBuffer sb = new StringBuffer();

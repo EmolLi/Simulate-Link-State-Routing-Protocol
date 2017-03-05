@@ -50,7 +50,7 @@ public class Router {
 	 * @param destinationIP the ip adderss of the destination simulated router
 	 */
 	private void processDetect(String destinationIP) {
-
+		System.out.println(linkStateDatabase.getShortestPath(destinationIP));
 	}
 
 	/**
@@ -151,7 +151,7 @@ public class Router {
 					link.remote_router.status = RouterStatus.TWO_WAY;
 					
 					linkStateDatabase.newLSA(link);//we insert new neighbor into our database
-					broadcastToNeighbors(link, linkStateDatabase.getLSA(localRouterDescription.simulatedIPAddress));
+					//broadcastToNeighbors(link, linkStateDatabase.getLSA(localRouterDescription.simulatedIPAddress));
 					System.out.println("Set "+ link.remote_router.simulatedIPAddress + "to TWO WAY");
 				}
 				else {

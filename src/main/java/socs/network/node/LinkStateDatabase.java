@@ -8,146 +8,204 @@ import java.util.*;
 
 public class LinkStateDatabase {
 
-  //routerSimulatedIp => LSAInstance
-  HashMap<String, LSA> _store = new HashMap<String, LSA>();
+    //routerSimulatedIp => LSAInstance
+    volatile HashMap<String, LSA> _store = new HashMap<String, LSA>();
 
-  private RouterDescription localRouterDescription = null;
+    private RouterDescription localRouterDescription = null;
+    public HashMap<String, Integer> dist;   //distance matrix, key: simulatedIpAddr, value:{int} distance
+    public HashMap<String, String> prev;    // Previous node in optimal path from source
 
-  public LinkStateDatabase(RouterDescription routerDescription) {
-    localRouterDescription = routerDescription;
-    LSA l = initLinkStateDatabase();
-    _store.put(l.routerSimulatedIP, l);
-  }
-
-  /**
-   *
-   * @return {LinkedList<LinkDescription>} the neighbors of the local routers
-   */
-  public LinkedList<LinkDescription> getNeighbors(){
-    return _store.get(localRouterDescription.simulatedIPAddress).links;
-  }
-
-  public LSA getLSA(String routerSimulatedIP){
-    return _store.get(routerSimulatedIP);
-  }
-
-
-  public void processLSAUPDATEPacket(Packet LSAUPDATE){
-    //LSAUPDATE.
-  }
-  
-  public void updateLSA(LSA lsa) throws Exception{
-    String simulatedIP = lsa.routerSimulatedIP;
-    int curSeqNum = _store.get(simulatedIP).lsaSeqNumber;
-    int newSeqNum = lsa.lsaSeqNumber;
-
-    if (curSeqNum >= newSeqNum){
-      //no need to update
-      throw new Exception("No need to update LSA!");
+    public LinkStateDatabase(RouterDescription routerDescription) {
+        localRouterDescription = routerDescription;
+        LSA l = initLinkStateDatabase();
+        _store.put(l.routerSimulatedIP, l);
     }
 
-    _store.put(simulatedIP, lsa);
-    System.out.println("UPDATE SUCCESSFULLY: " + lsa.toString());
-  }
-
-  
-  public void newLSA(Link link){
-	  LSA newLsa = new LSA(localRouterDescription.simulatedIPAddress, this.getNextLSASeqNum());
-	  LSA oldLsa = _store.get(localRouterDescription.simulatedIPAddress);
-	  newLsa.links.addAll(oldLsa.links);
-	  newLsa.links.add(link.linkDescription);
-	  _store.put(localRouterDescription.simulatedIPAddress, newLsa);
-  }
-  
-  public int getNextLSASeqNum(){
-    int lastSeqNum = getLSA(localRouterDescription.simulatedIPAddress).lsaSeqNumber;
-    return lastSeqNum + 1;
-  }
-
-  /**
-   * output the shortest path from this router to the destination with the given IP address
-   */
-  String getShortestPath(String destinationIP) {
-    //TODO: fill the implementation here
-    return null;
-  }
-
-  //initialize the linkstate database by adding an entry about the router itself
-  private LSA initLinkStateDatabase() {
-    LSA lsa = new LSA(localRouterDescription.simulatedIPAddress, Integer.MIN_VALUE);
-
-    LinkDescription ld = new LinkDescription(localRouterDescription.simulatedIPAddress, -1, 0);
-    lsa.links.add(ld);
-    return lsa;
-  }
-
-
-  public String toString() {
-    StringBuilder sb = new StringBuilder();
-    for (LSA lsa: _store.values()) {
-      sb.append(lsa.routerSimulatedIP).append("(" + lsa.lsaSeqNumber + ")").append(":\t");
-      for (LinkDescription ld : lsa.links) {
-        sb.append(ld.remoteRouter).append(",").append(ld.portNum).append(",").
-                append(ld.weight).append("\t");
-      }
-      sb.append("\n");
+    /**
+     * @return {LinkedList<LinkDescription>} the neighbors of the local routers
+     */
+    public LinkedList<LinkDescription> getNeighbors() {
+        return _store.get(localRouterDescription.simulatedIPAddress).links;
     }
-    return sb.toString();
-  }
+
+    public LSA getLSA(String routerSimulatedIP) {
+        return _store.get(routerSimulatedIP);
+    }
 
 
+    public void processLSAUPDATEPacket(Packet LSAUPDATE) {
+        //LSAUPDATE.
+    }
 
-  public HashMap<String, HashMap<String, Integer>> convertDataBaseToGraph(){
-    HashMap<String, HashMap<String, Integer>> graph = new HashMap<String, HashMap<String, Integer>>();
+    public void updateLSA(LSA lsa) throws Exception {
+        String simulatedIP = lsa.routerSimulatedIP;
+        int curSeqNum = _store.get(simulatedIP).lsaSeqNumber;
+        int newSeqNum = lsa.lsaSeqNumber;
 
-    for (LSA lsa : _store.values()){
-      for (LinkDescription link : lsa.links){
-
-        if (!graph.containsKey(lsa.routerSimulatedIP)){
-          graph.put(lsa.routerSimulatedIP, new HashMap<String, Integer>());
+        if (curSeqNum >= newSeqNum) {
+            //no need to update
+            throw new Exception("No need to update LSA!");
         }
 
-        graph.get(lsa.routerSimulatedIP).put(link.remoteRouter, link.weight);
-      }
-
-    }
-    return graph;
-  }
-  /**
-
-  public int[][] Dijkstra(HashMap<String, LSA> Graph, String source){
-    Set<String> Q = new HashSet<String>();  //create vertex set Q
-
-    //distance matrix, key: simulatedIpAddr, value:{int} distance
-    HashMap<String, Integer> dist = new HashMap<String, Integer>();
-
-    dist.put(localRouterDescription.simulatedIPAddress, 0); // Distance from source to source
-
-    //distance from source to all its neighbors
-    for (LinkDescription vertex : Graph.get(localRouterDescription.simulatedIPAddress).links){
-      //dist.put(vertex.)
+        _store.put(simulatedIP, lsa);
+        System.out.println("UPDATE SUCCESSFULLY: " + lsa.toString());
     }
 
-  };**//**
-          3      create vertex set Q
- 4
-         5      for each vertex v in Graph:             // Initialization
-          6          dist[v] ← INFINITY                  // Unknown distance from source to v
- 7          prev[v] ← UNDEFINED                 // Previous node in optimal path from source
- 8          add v to Q                          // All nodes initially in Q (unvisited nodes)
- 9
-         10      dist[source] ← 0                        // Distance from source to source
-          11
-          12      while Q is not empty:
-          13          u ← vertex in Q with min dist[u]    // Node with the least distance will be selected first
-          14          remove u from Q
-15
-        16          for each neighbor v of u:           // where v is still in Q.
-          17              alt ← dist[u] + length(u, v)
-18              if alt < dist[v]:               // A shorter path to v has been found
-          19                  dist[v] ← alt
-20                  prev[v] ← u
-21
-        22      return dist[], prev[]
-**/
+
+    public void newLSA(Link link) {
+        LSA newLsa = new LSA(localRouterDescription.simulatedIPAddress, this.getNextLSASeqNum());
+        LSA oldLsa = _store.get(localRouterDescription.simulatedIPAddress);
+        newLsa.links.addAll(oldLsa.links);
+        newLsa.links.add(link.linkDescription);
+        _store.put(localRouterDescription.simulatedIPAddress, newLsa);
+    }
+
+    public int getNextLSASeqNum() {
+        int lastSeqNum = getLSA(localRouterDescription.simulatedIPAddress).lsaSeqNumber;
+        return lastSeqNum + 1;
+    }
+
+    /**
+     * output the shortest path from this router to the destination with the given IP address
+     */
+    String getShortestPath(String destinationIP) {
+        HashMap<String, HashMap<String, Integer>> graph = convertDataBaseToGraph();
+        Dijkstra(graph);
+        return formatPath(destinationIP);
+    }
+
+
+    //initialize the linkstate database by adding an entry about the router itself
+    private LSA initLinkStateDatabase() {
+        LSA lsa = new LSA(localRouterDescription.simulatedIPAddress, Integer.MIN_VALUE);
+
+        LinkDescription ld = new LinkDescription(localRouterDescription.simulatedIPAddress, -1, 0);
+        lsa.links.add(ld);
+        return lsa;
+    }
+
+
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (LSA lsa : _store.values()) {
+            sb.append(lsa.routerSimulatedIP).append("(" + lsa.lsaSeqNumber + ")").append(":\t");
+            for (LinkDescription ld : lsa.links) {
+                sb.append(ld.remoteRouter).append(",").append(ld.portNum).append(",").
+                        append(ld.weight).append("\t");
+            }
+            sb.append("\n");
+        }
+        return sb.toString();
+    }
+
+
+
+
+    //----------------------------Helper functions for computing the shortest path------------------------------------
+
+    /**
+     * this function convert database to a graph, that's easier to run Dijkstra
+     * @return
+     */
+
+    private HashMap<String, HashMap<String, Integer>> convertDataBaseToGraph() {
+        HashMap<String, HashMap<String, Integer>> graph = new HashMap<String, HashMap<String, Integer>>();
+
+        for (LSA lsa : _store.values()) {
+            for (LinkDescription link : lsa.links) {
+
+                if (!graph.containsKey(lsa.routerSimulatedIP)) {
+                    graph.put(lsa.routerSimulatedIP, new HashMap<String, Integer>());
+                }
+
+                graph.get(lsa.routerSimulatedIP).put(link.remoteRouter, link.weight);
+            }
+
+        }
+        return graph;
+    }
+
+
+    /**
+     * this function modifies dist and prev table. compute the shortest path
+     *
+     * @param Graph the graph version of the database, so it's easier to run dijkstra
+     */
+    private void Dijkstra(HashMap<String, HashMap<String, Integer>> Graph) {
+        String src = localRouterDescription.simulatedIPAddress;
+
+        Set<String> Q = new HashSet<String>();  //create vertex set Q
+
+        //distance matrix, key: simulatedIpAddr, value:{int} distance
+        dist = new HashMap<String, Integer>();
+        // Previous node in optimal path from source
+        prev = new HashMap<String, String>();
+
+        for (String vertex : Graph.keySet()) {    // Initialization
+            dist.put(vertex, Integer.MAX_VALUE);    // Unknown distance from source to v
+            prev.put(vertex, null);
+            Q.add(vertex);  // All nodes initially in Q (unvisited nodes)
+        }
+        dist.put(localRouterDescription.simulatedIPAddress, 0); // Distance from source to source
+
+        while (!Q.isEmpty()) {
+            String u = findClosestUnvisitedVertex(Q, dist);
+            Q.remove(u);
+
+            //for each neighbor v of u
+            for (String v : Graph.get(u).keySet()) {
+                int alt = dist.get(u) + Graph.get(u).get(v);
+                if (alt < dist.get(v)) {    // A shorter path to v has been found
+                    dist.put(v, alt);
+                    prev.put(v, u);
+                }
+            }
+        }
+    }
+
+
+
+    private String findClosestUnvisitedVertex(Set<String> Q, HashMap<String, Integer> dist) {
+        int minDist = Integer.MAX_VALUE;
+        String closestVertex = null;
+
+        for (String vertex : Q) {
+            if (dist.get(vertex) < minDist) {
+                closestVertex = vertex;
+                minDist = dist.get(vertex);
+            }
+        }
+
+        return closestVertex;
+    }
+
+    /**
+     * this function should be executed after Dijkstra.
+     * it reads the result computed by Dijkstra and converted a nicer formatted string
+     * @param destinationIP
+     * @return path like 192.168.1.2 ->(4) 192.168.1.5 ->(3) 192.168.1.3 ->(2) 192.168.1.6
+     */
+    private String formatPath(String destinationIP){
+        String router = destinationIP;  //destination
+        String path = "";
+
+        while (!router.equals(localRouterDescription.simulatedIPAddress)){
+            path = router + path;
+            try {
+                String weight = "(" + _store.get(router).getLinkDescription(prev.get(router)).weight + ")";
+                path = prev.get(router) + " ->" + weight + path;
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+            //move router one back step along the path to src
+            router = prev.get(router);
+        }
+
+        return path;
+    }
+
+    //------------------------------------------------------------------------------------------------------
+
+
+
 }
