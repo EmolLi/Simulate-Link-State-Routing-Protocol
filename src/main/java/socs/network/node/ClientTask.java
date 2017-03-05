@@ -41,7 +41,7 @@ public class ClientTask implements Runnable{
 			}
 
 		}catch (Exception e){
-			//remote router is closed.
+			System.out.println(e);
 			System.err.flush();
 			if (!mapIpLink.containsKey(port.remote_router.simulatedIPAddress)) return;
 			System.err.println("Connection to "+ port.remote_router.simulatedIPAddress +" is closed. ");
@@ -136,6 +136,7 @@ public class ClientTask implements Runnable{
 
 
 	private void gotLSAUpdateMsg(Packet packet) {
+		System.out.println("Got LSUPDATE");
 		LinkStateDatabase db = this.linkStateDatabase;
 		for(LSA lsa : packet.lsaArray){
 			if(isAlreadyInDb(db, lsa)){
@@ -149,22 +150,30 @@ public class ClientTask implements Runnable{
 					System.err.println("We could not update LSA for some reason");
 					e.printStackTrace();
 				}
-				Link link_to_ignore = mapIpLink.get(packet.simulatedSrcIP);
-				forwardToNeighbors(link_to_ignore, lsa);
+				Link linkOverWhichWeReceivedLSA = mapIpLink.get(packet.simulatedSrcIP);
+				forwardToNeighbors(linkOverWhichWeReceivedLSA, lsa);
 			}			
 		}
 	}
 	
 	
-	private void forwardToNeighbors(Link link_to_ignore, LSA linkStateAdvertisement) {
+	private void forwardToNeighbors(Link linkOverWhichWeReceived, LSA linkStateAdvertisement) {
 		System.out.println("Received LSAUPDATE from neighbor");
 		
 		LSA neighbors = linkStateDatabase.getLSA(localRouter.simulatedIPAddress);
 	
 		for(LinkDescription neighbor : neighbors.links){
-			Link link_of_neighbor = mapIpLink.get(neighbor.remoteRouter);
+			if(this.localRouter.simulatedIPAddress.compareTo(neighbor.remoteRouter) == 0){
+				continue; //don't forward to yourself
+			}
+			if(!mapIpLink.keySet().contains(neighbor.remoteRouter)){
+				System.out.println(neighbor.remoteRouter+"not in connections");
+				continue;
+			}
 			
-			if(link_to_ignore != link_of_neighbor){
+			System.out.println("Forwarding");
+			Link link_of_neighbor = mapIpLink.get(neighbor.remoteRouter);
+			if(linkOverWhichWeReceived != link_of_neighbor){
 				ArrayList<LSA> linkStateAdvertisements = new ArrayList<LSA>();//in case we need array
 				linkStateAdvertisements.add(linkStateAdvertisement);
 				Packet packet = Packet.LSAUPDATE(localRouter.simulatedIPAddress, link_of_neighbor.remote_router.simulatedIPAddress,linkStateAdvertisements);
