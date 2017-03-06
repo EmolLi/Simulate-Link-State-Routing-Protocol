@@ -28,6 +28,8 @@ public class Router {
 		localRouterDescription = new RouterDescription(config.getString("socs.network.router.ip"),config.getShort("socs.network.router.port"));
 		linkStateDatabase = new LinkStateDatabase(localRouterDescription);
 		this.server = new Server(mapIpLink,localRouterDescription, linkStateDatabase);
+
+		System.out.println("simulated IP: " + localRouterDescription.simulatedIPAddress);
 	}
 
 	public int getPortsSize(){

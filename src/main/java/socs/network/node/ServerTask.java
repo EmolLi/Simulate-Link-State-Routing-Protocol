@@ -111,6 +111,13 @@ public class ServerTask implements Runnable{
 
 	//0 - HELLO, 1 - LinkState Update 2 - Attach
 	private void processPacket(Packet packet){
+		//in case packet stuck in loop.
+		/**
+		if (packet.TTL <= 0){
+			//drop packet
+			return;
+		}**/
+
 		int packtype = packet.packetType;
 		switch (packtype){
 		case 0:
@@ -143,7 +150,7 @@ public class ServerTask implements Runnable{
 			}
 			else{
 				try {
-					db.updateLSA(lsa);
+					if (!db.updateLSA(lsa)) return;
 				} catch (Exception e) {
 					System.err.println("could not update LinkStateDatabase");
 					e.printStackTrace();
@@ -165,6 +172,9 @@ public class ServerTask implements Runnable{
 			
 			Link neigborConnection = mapIpLink.get(neighbor.remoteIP);
 			if(linkOverWhichWeReceived != neigborConnection){
+				if (neighbor.remoteIP.equals("192.168.3.1")){
+					//continue;
+				}
 				System.out.println("Forwarding to: "+neighbor.remoteIP);
 				sendLSAUPDATEPacket(lsa, neigborConnection);
 			}

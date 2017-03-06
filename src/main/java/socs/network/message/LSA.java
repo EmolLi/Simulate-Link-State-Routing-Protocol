@@ -23,7 +23,7 @@ public class LSA implements Serializable {
    */
   public LinkDescription getLinkDescription(String neighborRouterSimulatedIp)throws Exception{
     for (LinkDescription link : links){
-      if (link.remoteRouter.equals(neighborRouterSimulatedIp)) return link;
+      if (link.remoteIP.equals(neighborRouterSimulatedIp)) return link;
     }
     throw new Exception("Neighbor not found!");
   }
