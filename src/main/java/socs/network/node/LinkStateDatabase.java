@@ -33,37 +33,37 @@ public class LinkStateDatabase {
     }
 
 
-    public void processLSAUPDATEPacket(Packet LSAUPDATE) {
-        //LSAUPDATE.
-    }
-
-    public void updateLSA(LSA lsa) throws Exception {
-        String simulatedIP = lsa.routerSimulatedIP;
+  public void updateLSA(LSA lsa) throws Exception{
+    String simulatedIP = lsa.routerSimulatedIP;
+    if(_store.containsKey(simulatedIP)){
         int curSeqNum = _store.get(simulatedIP).lsaSeqNumber;
         int newSeqNum = lsa.lsaSeqNumber;
 
-        if (curSeqNum >= newSeqNum) {
-            //no need to update
-            throw new Exception("No need to update LSA!");
+        if (curSeqNum >= newSeqNum){
+          return;
         }
-
         _store.put(simulatedIP, lsa);
         System.out.println("UPDATE SUCCESSFULLY: " + lsa.toString());
     }
-
-
-    public void newLSA(Link link) {
-        LSA newLsa = new LSA(localRouterDescription.simulatedIPAddress, this.getNextLSASeqNum());
-        LSA oldLsa = _store.get(localRouterDescription.simulatedIPAddress);
-        newLsa.links.addAll(oldLsa.links);
-        newLsa.links.add(link.linkDescription);
-        _store.put(localRouterDescription.simulatedIPAddress, newLsa);
+    else{
+        _store.put(simulatedIP, lsa);
+        System.out.println("INCLUDED NEW ENTRY INTO DB: " + lsa.toString());
     }
+  }
 
-    public int getNextLSASeqNum() {
-        int lastSeqNum = getLSA(localRouterDescription.simulatedIPAddress).lsaSeqNumber;
-        return lastSeqNum + 1;
-    }
+  
+  public void addNewLinkToDB(Link link){
+	  LSA newLsa = new LSA(localRouterDescription.simulatedIPAddress, this.getNextLSASeqNum());
+	  LSA oldLsa = _store.get(localRouterDescription.simulatedIPAddress);
+	  newLsa.links.addAll(oldLsa.links);
+	  newLsa.links.add(link.linkDescription);
+	  _store.put(localRouterDescription.simulatedIPAddress, newLsa);
+  }
+  
+  public int getNextLSASeqNum(){
+    int lastSeqNum = getLSA(localRouterDescription.simulatedIPAddress).lsaSeqNumber;
+    return lastSeqNum + 1;
+  }
 
     /**
      * output the shortest path from this router to the destination with the given IP address
@@ -85,18 +85,18 @@ public class LinkStateDatabase {
     }
 
 
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        for (LSA lsa : _store.values()) {
-            sb.append(lsa.routerSimulatedIP).append("(" + lsa.lsaSeqNumber + ")").append(":\t");
-            for (LinkDescription ld : lsa.links) {
-                sb.append(ld.remoteRouter).append(",").append(ld.portNum).append(",").
-                        append(ld.weight).append("\t");
-            }
-            sb.append("\n");
-        }
-        return sb.toString();
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    for (LSA lsa: _store.values()) {
+      sb.append(lsa.routerSimulatedIP).append("(" + lsa.lsaSeqNumber + ")").append(":\t");
+      for (LinkDescription ld : lsa.links) {
+        sb.append(ld.remoteIP).append(",").append(ld.portNum).append(",").
+                append(ld.weight).append("\t");
+      }
+      sb.append("\n");
     }
+    return sb.toString();
+  }
 
 
 
@@ -118,9 +118,8 @@ public class LinkStateDatabase {
                     graph.put(lsa.routerSimulatedIP, new HashMap<String, Integer>());
                 }
 
-                graph.get(lsa.routerSimulatedIP).put(link.remoteRouter, link.weight);
+                graph.get(lsa.routerSimulatedIP).put(link.remoteIP, link.weight);
             }
-
         }
         return graph;
     }
@@ -163,6 +162,22 @@ public class LinkStateDatabase {
         }
     }
 
+  };
+
+
+public boolean hasEntryFor(String routerSimulatedIP) {
+	return _store.containsKey(routerSimulatedIP);
+}
+
+	public ArrayList<LSA> getLSAs() {
+		ArrayList<LSA> lsas = new ArrayList<LSA>();
+		synchronized(_store){
+			for(String ip : _store.keySet()){
+				lsas.add(_store.get(ip));
+			}
+		}
+		return lsas;
+	}
 
 
     private String findClosestUnvisitedVertex(Set<String> Q, HashMap<String, Integer> dist) {
