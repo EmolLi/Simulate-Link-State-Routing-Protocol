@@ -71,6 +71,10 @@ public class LinkStateDatabase {
      * output the shortest path from this router to the destination with the given IP address
      */
     String getShortestPath(String destinationIP) {
+        if (!this.hasEntryFor(destinationIP)){
+            System.out.println("Unknown destination IP.");
+            return null;
+        }
         HashMap<String, HashMap<String, Integer>> graph = convertDataBaseToGraph();
         Dijkstra(graph);
         return formatPath(destinationIP);
