@@ -138,28 +138,29 @@ public class ServerTask implements Runnable{
 	 * We check if we already have this LSA. If we don't then we forward to all our neighbors.
 	 * @param packet
 	 */
-	private void gotLSAUpdateMsg(Packet packet) {
-		System.out.println("received LSUPDATE from "+packet.simulatedSrcIP);
-		LinkStateDatabase db = this.linkStateDatabase;
-		
-		System.out.println(packet.print());
-		for(LSA lsa : packet.lsaArray){
-			System.out.println(lsa);
-			if(isAlreadyInDb(db, lsa)){
-				continue;
-			}
-			else{
-				try {
-					if (!db.updateLSA(lsa)) return;
-				} catch (Exception e) {
-					System.err.println("could not update LinkStateDatabase");
-					e.printStackTrace();
-				}
-				Link linkOverWhichWeReceivedLSA = mapIpLink.get(packet.simulatedSrcIP);
-				forwardToNeighbors(linkOverWhichWeReceivedLSA, lsa);
-			}			
-		}
-	}
+    private void gotLSAUpdateMsg(Packet packet) {
+        System.out.println("received LSUPDATE from " + packet.simulatedSrcIP);
+        LinkStateDatabase db = this.linkStateDatabase;
+
+        for (LSA lsa : packet.lsaArray) {
+        /*    if (isAlreadyInDb(db, lsa)) {
+                continue;//since we only have one lsa per array
+            } else {*/
+                try {
+                	boolean newLSA = db.updateLSA(lsa); 
+                    if (!newLSA){
+                    	continue;
+                    }
+                    else{
+                        Link linkOverWhichWeReceivedLSA = mapIpLink.get(packet.simulatedSrcIP);
+                        forwardToNeighbors(linkOverWhichWeReceivedLSA, lsa);
+                    }
+                } catch (Exception e) {
+                    System.err.println("could not update LinkStateDatabase");
+                    e.printStackTrace();
+                }
+        }
+    }
 	
 	
 	private void forwardToNeighbors(Link linkOverWhichWeReceived, LSA lsa) {

@@ -129,18 +129,22 @@ public class ClientTask implements Runnable {
         LinkStateDatabase db = this.linkStateDatabase;
 
         for (LSA lsa : packet.lsaArray) {
-            if (isAlreadyInDb(db, lsa)) {
+        /*    if (isAlreadyInDb(db, lsa)) {
                 continue;//since we only have one lsa per array
-            } else {
+            } else {*/
                 try {
-                    if (!db.updateLSA(lsa)) return;
+                	boolean newLSA = db.updateLSA(lsa); 
+                    if (!newLSA){
+                    	continue;
+                    }
+                    else{
+                        Link linkOverWhichWeReceivedLSA = mapIpLink.get(packet.simulatedSrcIP);
+                        forwardToNeighbors(linkOverWhichWeReceivedLSA, lsa);
+                    }
                 } catch (Exception e) {
                     System.err.println("could not update LinkStateDatabase");
                     e.printStackTrace();
                 }
-                Link linkOverWhichWeReceivedLSA = mapIpLink.get(packet.simulatedSrcIP);
-                forwardToNeighbors(linkOverWhichWeReceivedLSA, lsa);
-            }
         }
     }
 

@@ -95,7 +95,7 @@ public class Router {
 	private void processStart() {
 		for (Link connection : mapIpLink.values()){
 			//we only start client.
-			if (connection.isClient == false) continue;
+			//if (connection.isClient == false) continue;
 			try {
 				sendHELLO(connection);
 			}catch (Exception e){
@@ -112,6 +112,7 @@ public class Router {
 	 */
 	//TODO: Make sure that we can't send HELLO twice
 	private void sendHELLO(Link connection) throws IOException {
+		System.out.println("Send initial HELLO to: "+connection.remote_router.simulatedIPAddress);
 		connection.send(new Packet(connection.local_router.simulatedIPAddress, connection.remote_router.simulatedIPAddress, 0));
 	}
 

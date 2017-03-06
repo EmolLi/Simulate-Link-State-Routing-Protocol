@@ -34,7 +34,7 @@ public class LinkStateDatabase {
 
 
 
-    public boolean updateLSA(LSA lsa) throws Exception {
+    public boolean updateLSA(LSA lsa){
         String simulatedIP = lsa.routerSimulatedIP;
         if (_store.containsKey(simulatedIP)) {
             int curSeqNum = _store.get(simulatedIP).lsaSeqNumber;
@@ -56,7 +56,10 @@ public class LinkStateDatabase {
 
     public void addNewLinkToDB(Link link) {
         LSA newLsa = new LSA(localRouterDescription.simulatedIPAddress, this.getNextLSASeqNum());
+    
         LSA oldLsa = _store.get(localRouterDescription.simulatedIPAddress);
+        System.out.println(oldLsa);
+        System.out.println(link);
         newLsa.links.addAll(oldLsa.links);
         newLsa.links.add(link.linkDescription);
         _store.put(localRouterDescription.simulatedIPAddress, newLsa);
