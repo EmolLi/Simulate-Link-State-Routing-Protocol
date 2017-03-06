@@ -94,8 +94,7 @@ public class Router {
 	 */
 	private void processStart() {
 		for (Link connection : mapIpLink.values()){
-			//we only start client.
-			//if (connection.isClient == false) continue;
+			if (!connection.goesIN) continue;//we only send on connections that go out
 			try {
 				sendHELLO(connection);
 			}catch (Exception e){

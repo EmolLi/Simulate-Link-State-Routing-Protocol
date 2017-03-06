@@ -12,7 +12,7 @@ public class Link {
 
 	RouterDescription local_router;
 	RouterDescription remote_router;
-	boolean isClient; //only client side start the router!
+	boolean goesIN; //only client side start the router!
 	int portNum;
 	int weight;
 	final Socket connection;

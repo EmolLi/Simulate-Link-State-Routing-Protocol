@@ -69,7 +69,7 @@ public class ClientTask extends NetworkTask {
 
             //we need to send router description of a connecting router
             Link link = new Link(this.localRouter, remoteRouter, connectionToRemote, weight);
-            link.isClient = true;//why do we use this?
+            link.goesIN = false;
 
 
             link.send(attachRequest);

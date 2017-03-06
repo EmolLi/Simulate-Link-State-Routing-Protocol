@@ -109,16 +109,7 @@ public abstract class NetworkTask implements Runnable{
 			e.printStackTrace();
 		}
 	}
-	
-	private boolean isAlreadyInDb(LinkStateDatabase db, LSA lsa) {
-		if(db.hasEntryFor(lsa.routerSimulatedIP)){
-			return lsa.lsaSeqNumber < db.getLSA(lsa.routerSimulatedIP).lsaSeqNumber;
-		}
-		else{
-			return false;
-		}
-	}
-	
+		
 	
 	public synchronized void performLSAUPDATE(Link link) {
 		linkStateDatabase.addNewLinkToDB(link);//we insert new neighbor into our database

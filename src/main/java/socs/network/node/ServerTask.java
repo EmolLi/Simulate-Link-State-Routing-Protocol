@@ -51,7 +51,7 @@ public class ServerTask extends NetworkTask{
 
 		RouterDescription remoteRouter = initRemoteRouterDescription(packetFromClient);
 		Link link = new Link(this.localRouter, remoteRouter, connection, packetFromClient.weight);
-		link.isClient = false;
+		link.goesIN = true;
 		synchronized(mapIpLink){
 			if(mapIpLink.size() < 4){
 				this.mapIpLink.put(remoteRouter.simulatedIPAddress, link);
