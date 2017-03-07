@@ -54,7 +54,7 @@ public class LinkStateDatabase {
     }
 
 
-    public void addNewLinkToDB(Link link) {
+    public synchronized void addNewLinkToDB(Link link) {
         LSA newLsa = new LSA(localRouterDescription.simulatedIPAddress, this.getNextLSASeqNum());
     
         LSA oldLsa = _store.get(localRouterDescription.simulatedIPAddress);
@@ -65,7 +65,7 @@ public class LinkStateDatabase {
         _store.put(localRouterDescription.simulatedIPAddress, newLsa);
     }
 
-    public int getNextLSASeqNum() {
+    public synchronized int getNextLSASeqNum() {
         int lastSeqNum = getLSA(localRouterDescription.simulatedIPAddress).lsaSeqNumber;
         return lastSeqNum + 1;
     }

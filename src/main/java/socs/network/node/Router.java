@@ -94,7 +94,7 @@ public class Router {
 	 */
 	private void processStart() {
 		for (Link connection : mapIpLink.values()){
-			if (!connection.goesIN) continue;//we only send on connections that go out
+			if (connection.goesIN) continue;//we only send on connections that go out
 			try {
 				sendHELLO(connection);
 			}catch (Exception e){
@@ -111,16 +111,14 @@ public class Router {
 	 */
 	//TODO: Make sure that we can't send HELLO twice
 	private void sendHELLO(Link connection) throws IOException {
-		System.out.println("Send initial HELLO to: "+connection.remote_router.simulatedIPAddress);
-		connection.send(new Packet(connection.local_router.simulatedIPAddress, connection.remote_router.simulatedIPAddress, 0));
+		if(connection.remote_router.status != RouterStatus.TWO_WAY){
+			System.out.println("Send initial HELLO to: "+connection.remote_router.simulatedIPAddress);
+			connection.send(new Packet(connection.local_router.simulatedIPAddress, connection.remote_router.simulatedIPAddress, 0));	
+		}
+		else{
+			System.out.println(connection.remote_router.simulatedIPAddress+" is already set to TWO_WAY");
+		}
 	}
-
-	/**
-	 * This is LSAUPDATE protocol used to send links to neighboring routers
-	 * @param link
-	 */
-
-
 	/**
 	 * attach the link to the remote router, which is identified by the given simulated ip;
 	 * to establish the connection via socket, you need to indentify the process IP and process Port;

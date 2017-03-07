@@ -25,13 +25,6 @@ public abstract class NetworkTask implements Runnable{
 
 	//0 - HELLO, 1 - LinkState Update 2 - Attach
 	public void processPacket(Packet packet){
-		//in case packet stuck in loop.
-		/**
-		if (packet.TTL <= 0){
-			//drop packet
-			return;
-		}**/
-
 		int packtype = packet.packetType;
 		switch (packtype){
 		case 0:
@@ -59,9 +52,6 @@ public abstract class NetworkTask implements Runnable{
         LinkStateDatabase db = this.linkStateDatabase;
 
         for (LSA lsa : packet.lsaArray) {
-        /*    if (isAlreadyInDb(db, lsa)) {
-                continue;//since we only have one lsa per array
-            } else {*/
                 try {
                 	boolean newLSA = db.updateLSA(lsa); 
                     if (!newLSA){

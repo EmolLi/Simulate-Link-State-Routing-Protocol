@@ -48,7 +48,7 @@ public class ClientTask extends NetworkTask {
         port.remote_router.status = RouterStatus.TWO_WAY;
         System.out.println("Set " + port.remote_router.simulatedIPAddress + " to TWO WAY");
         try {
-            port.send(new Packet(port.local_router.simulatedIPAddress, port.remote_router.simulatedIPAddress, 0));
+            port.send(new Packet(port.local_router.simulatedIPAddress, port.remote_router.simulatedIPAddress, 0));//last hello message from client
         } catch (IOException e) {
             System.err.println("error in gotHelloMsg in ClientTask");
             e.printStackTrace();

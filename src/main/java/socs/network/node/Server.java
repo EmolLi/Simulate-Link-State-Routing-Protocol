@@ -44,6 +44,7 @@ public class Server {
 								threadPool.submit(new ServerTask(mapIpLink, connection, localRouter, db));
 							}
 							else {
+								System.err.println("Cannot connect since capacity  is exceeded");
 								connection.close();
 							}
 						}
