@@ -29,7 +29,7 @@ public class ServerTask extends NetworkTask{
 
 			//connection set up successfully
 			//now we listen for incoming packages
-			while (true) {
+			while (true && this.port != null) {
 				Packet packet = this.port.read();
 				processPacket(packet);
 				System.out.print(">> ");
@@ -48,24 +48,14 @@ public class ServerTask extends NetworkTask{
 
 	private Link handleAcceptedConnection() throws Exception{
 		Packet packetFromClient =  getInitPacket();
-
 		RouterDescription remoteRouter = initRemoteRouterDescription(packetFromClient);
-		//Link link = new Link(this.localRouter, remoteRouter, connection, packetFromClient.weight);
+
 		Link link = this.createNewLink(remoteRouter.simulatedIPAddress, remoteRouter, packetFromClient.weight, connection);
 		if (link == null){
 			return null;
 		}
 		link.goesIN = true;
 		return link;
-		/**
-		synchronized(mapIpLink){
-			if(mapIpLink.size() < 4){
-				this.mapIpLink.put(remoteRouter.simulatedIPAddress, link);
-				System.out.println("Link created: "+remoteRouter.processPortNumber+" - "+remoteRouter.simulatedIPAddress);//process port number is always 0
-				return link;
-			}
-		}*/
-		//return null;
 	}
 
 

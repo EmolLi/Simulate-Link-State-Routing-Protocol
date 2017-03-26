@@ -15,9 +15,6 @@ public class ClientTask extends NetworkTask {
     	super(mapIpLink, connection, localRouter, db);
     	
         this.port = this.attachToRemote(simulatedDstIP, weight, connection, (short) connection.getPort());
-        if (port == null) {
-            //System.out.println("Connection failed");
-        }
     }
 
     public void run() {
@@ -68,27 +65,13 @@ public class ClientTask extends NetworkTask {
             RouterDescription remoteRouter = new RouterDescription(simulatedDstIP, processPort);
 
             //we need to send router description of a connecting router
-            //Link link = new Link(this.localRouter, remoteRouter, connection, weight);
-
             Link link = this.createNewLink(simulatedDstIP, remoteRouter, weight, connection);
             if (link == null){
                 return null;
             }
             link.goesIN = false;
-
             link.send(attachRequest);
 
-            //check if we can connect to more servers
-            /**
-             * synchronized (mapIpLink) {
-                if (this.mapIpLink.size() < 4) {
-                    this.mapIpLink.put(simulatedDstIP, link);
-                } else {
-                    System.err.flush();
-                    System.err.print("We are already connected to three servers.\n");
-                    return null;
-                }
-            }**/
             return link;
 
         } catch (Exception e) {
