@@ -119,6 +119,24 @@ public class LinkStateDatabase {
         portNumToIPMap[portNum] = link.remote_router.simulatedIPAddress;
     }
 
+    public synchronized void removeLink(Link link){
+        portNumToIPMap[link.portNum] = null;
+
+        System.out.print("HI");
+        // db sync
+        // create new LSA
+        LSA newLsa = new LSA(localRouterDescription.simulatedIPAddress, this.getNextLSASeqNum());
+        LSA oldLsa = _store.get(localRouterDescription.simulatedIPAddress);
+        System.out.println(oldLsa);
+        System.out.println(link);
+        newLsa.links.addAll(oldLsa.links);
+        newLsa.links.remove(link.linkDescription);
+        _store.put(localRouterDescription.simulatedIPAddress, newLsa);
+
+        // delete remote router entry from db
+        // _store.remove(link.remote_router.simulatedIPAddress);
+    }
+
     /**
      *
      * @param portNum

@@ -107,7 +107,7 @@ public abstract class NetworkTask implements Runnable{
 	}
 
 	/**
-	 * After finishing HELLO on client. We are sending LSAUPDATE to every neighbor.
+	 * After finishing HELLO on client (or we just delete on link). We are sending LSAUPDATE to every neighbor.
 	 */
 	public void broadcastLSAUPDATE() {
 			LSA neighborsOfThisServer = linkStateDatabase.getLSA(localRouter.simulatedIPAddress);
@@ -159,7 +159,8 @@ public abstract class NetworkTask implements Runnable{
 		}
 		catch (Exception e){
 			try {
-				connection.close();
+
+				//connection.close();
 			}catch (Exception b){
 				b.printStackTrace();
 			}
@@ -167,6 +168,25 @@ public abstract class NetworkTask implements Runnable{
 			return null;
 		}
 
+	}
+
+	/**
+	 *
+	 * @param link
+	 * @return if we have disconnect the link successfully
+	 */
+	protected synchronized boolean disconnectLink(Link link){
+		link.close();
+		if (link.linkClosed){
+			// link closed successfully
+			linkStateDatabase.removeLink(link);
+			System.out.print("123");
+			// boardcast to neighbors
+			broadcastLSAUPDATE();
+			return true;
+		}
+
+		return false;
 	}
 
 }

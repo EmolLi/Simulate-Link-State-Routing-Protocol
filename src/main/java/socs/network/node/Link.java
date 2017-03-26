@@ -20,6 +20,8 @@ public class Link {
 	ObjectInputStream in;
 
 	LinkDescription linkDescription;
+	boolean disconnected;	// if we try to disconnect a link, we set disconnected to boolean, and then we will try to close the socket if there is a opportunity
+    boolean linkClosed; // we already closed this link
 
 	/**
 	 *
@@ -37,8 +39,29 @@ public class Link {
 		this.out = new ObjectOutputStream(connection.getOutputStream());
 		this.in = new ObjectInputStream(connection.getInputStream());
 		this.linkDescription = new LinkDescription(remote_router.simulatedIPAddress, connection.getLocalPort(), weight);
+		this.disconnected = false;
+		this.linkClosed = false;
 	}
 
+
+    /**
+     * try close this link
+     * the link may not be closed immediately
+     */
+	public boolean close(){
+		disconnected = true;
+		try {
+		    in.close();
+		    out.close();
+		    connection.close();
+		    System.out.println("success");
+		    linkClosed = true;
+		    return true;
+		}catch (Exception e){
+		    System.out.println("...closing connection...");
+		    return false;
+        }
+	}
 
 	public synchronized void send(Packet packet) throws IOException{
 	    try {

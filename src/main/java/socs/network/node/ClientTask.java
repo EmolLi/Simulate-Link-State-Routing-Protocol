@@ -20,7 +20,12 @@ public class ClientTask extends NetworkTask {
     public void run() {
         try {
             while (true && port != null) {
+                if (port.disconnected){
+                    if (disconnectLink(port)) break;
+                    // if we cannot disconnect the link at this point, we continue running, and try disconnect at another point
+                }
                 Packet packet = this.port.read();
+
                 processPacket(packet);
                 System.out.print(">>");
             }
@@ -28,9 +33,14 @@ public class ClientTask extends NetworkTask {
             System.out.println(e);
             System.err.flush();
             if (!mapIpLink.containsKey(port.remote_router.simulatedIPAddress)) return;
+
+            // TODO: change this part later
+            disconnectLink(port);
+            System.out.println(">>");
+            /**
             System.err.println("Connection to " + port.remote_router.simulatedIPAddress + " is closed. ");
             mapIpLink.remove(port.remote_router.simulatedIPAddress);
-            System.err.println("Deleted this link from ports.");
+            System.err.println("Deleted this link from ports.");**/
             return;
         }
     }

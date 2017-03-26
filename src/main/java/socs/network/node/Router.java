@@ -56,7 +56,9 @@ public class Router {
 	 * @param portNumber the port number which the link attaches at
 	 */
 	private void processDisconnect(short portNumber) {
-
+		Link link = mapIpLink.get(linkStateDatabase.getIPByPortNum(portNumber));
+		System.out.println(portNumber + "PNum");
+		link.close();
 	}
 
 	/**
