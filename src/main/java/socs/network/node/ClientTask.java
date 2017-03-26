@@ -16,13 +16,13 @@ public class ClientTask extends NetworkTask {
     	
         this.port = this.attachToRemote(simulatedDstIP, weight, connection, (short) connection.getPort());
         if (port == null) {
-            System.out.println("Connection failed");
+            //System.out.println("Connection failed");
         }
     }
 
     public void run() {
         try {
-            while (true) {
+            while (true && port != null) {
                 Packet packet = this.port.read();
                 processPacket(packet);
                 System.out.print(">>");
@@ -57,25 +57,30 @@ public class ClientTask extends NetworkTask {
     }
 
 
-    private Link attachToRemote(String simulatedDstIP, int weight, Socket connectionToRemote, short processPort) {
+    private Link attachToRemote(String simulatedDstIP, int weight, Socket connection, short processPort) {
         try {
             //we need to pass the weight to the server, so it knows the weight of this link
             //we don't need it since we are going to get weight after running hello
             Packet attachRequest = Packet.AttachLinkRequest(this.localRouter.simulatedIPAddress, simulatedDstIP, weight);
 
-            ObjectOutputStream out = new ObjectOutputStream(connectionToRemote.getOutputStream());
+            ObjectOutputStream out = new ObjectOutputStream(connection.getOutputStream());
             out.writeObject(attachRequest);
             RouterDescription remoteRouter = new RouterDescription(simulatedDstIP, processPort);
 
             //we need to send router description of a connecting router
-            Link link = new Link(this.localRouter, remoteRouter, connectionToRemote, weight);
-            link.goesIN = false;
+            //Link link = new Link(this.localRouter, remoteRouter, connection, weight);
 
+            Link link = this.createNewLink(simulatedDstIP, remoteRouter, weight, connection);
+            if (link == null){
+                return null;
+            }
+            link.goesIN = false;
 
             link.send(attachRequest);
 
             //check if we can connect to more servers
-            synchronized (mapIpLink) {
+            /**
+             * synchronized (mapIpLink) {
                 if (this.mapIpLink.size() < 4) {
                     this.mapIpLink.put(simulatedDstIP, link);
                 } else {
@@ -83,7 +88,7 @@ public class ClientTask extends NetworkTask {
                     System.err.print("We are already connected to three servers.\n");
                     return null;
                 }
-            }
+            }**/
             return link;
 
         } catch (Exception e) {

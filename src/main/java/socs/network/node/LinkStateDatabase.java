@@ -11,6 +11,9 @@ public class LinkStateDatabase {
     //routerSimulatedIp => LSAInstance
     volatile HashMap<String, LSA> _store = new HashMap<String, LSA>();
 
+    // this stores the mapping between port number (0-3) to simulated ip
+    private volatile String[] portNumToIPMap = new String[4];
+
     private RouterDescription localRouterDescription = null;
     public HashMap<String, Integer> dist;   //distance matrix, key: simulatedIpAddr, value:{int} distance
     public HashMap<String, String> prev;    // Previous node in optimal path from source
@@ -105,6 +108,39 @@ public class LinkStateDatabase {
             sb.append("\n");
         }
         return sb.toString();
+    }
+
+    /**
+     *
+     * @param portNum
+     * @param link
+     */
+    public synchronized void occupyPort(int portNum, Link link){
+        portNumToIPMap[portNum] = link.remote_router.simulatedIPAddress;
+    }
+
+    /**
+     *
+     * @param portNum
+     * @return the simulated Ip of the link at this port
+     */
+    public String getIPByPortNum(int portNum){
+        return portNumToIPMap[portNum];
+    }
+
+    /**
+     *
+     * @return {int} port number. (0 - 3) if there r available port, -1 if all the ports are full
+     */
+    public synchronized int findAvailablePortNum(){
+        for (int i = 0; i < 4; i++){
+            if (portNumToIPMap[i] == null){
+                // there is no link in this port
+                // this port is available
+                return i;
+            }
+        }
+        return -1;
     }
 
 

@@ -135,4 +135,38 @@ public abstract class NetworkTask implements Runnable{
 		}
 	}
 
+
+	/**
+	 *
+	 * @param simulatedDstIP
+	 * @param remoteRouter
+	 * @param weight
+	 * @param connection
+	 * @return
+	 */
+	protected synchronized Link createNewLink(String simulatedDstIP, RouterDescription remoteRouter, int weight, Socket connection){
+		int portNum = linkStateDatabase.findAvailablePortNum();
+		if (portNum == -1){
+			System.err.println("All ports are full!");
+			return null;
+		}
+		try {
+			Link link = new Link(this.localRouter, remoteRouter, connection, weight, portNum);
+			linkStateDatabase.occupyPort(portNum, link);
+			this.mapIpLink.put(simulatedDstIP, link);
+			System.out.println("Link created -- Port Num: " + portNum + ", IP: " + remoteRouter.simulatedIPAddress);
+			return link;
+		}
+		catch (Exception e){
+			try {
+				connection.close();
+			}catch (Exception b){
+				b.printStackTrace();
+			}
+			// e.printStackTrace();
+			return null;
+		}
+
+	}
+
 }

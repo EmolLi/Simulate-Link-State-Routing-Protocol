@@ -28,10 +28,10 @@ public class Link {
 	 * @param connection
 	 * @throws IOException
 	 */
-	public Link(RouterDescription local_router, RouterDescription remote_router, Socket connection, int weight) throws IOException {
+	public Link(RouterDescription local_router, RouterDescription remote_router, Socket connection, int weight, int portNum) throws IOException {
 		this.local_router = local_router;
 		this.remote_router = remote_router;
-		//this.portNum = portNum;
+		this.portNum = portNum;
 		this.weight = weight;
         this.connection = connection;
 		this.out = new ObjectOutputStream(connection.getOutputStream());
