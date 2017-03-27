@@ -77,11 +77,12 @@ public class LinkStateDatabase {
      * output the shortest path from this router to the destination with the given IP address
      */
     String getShortestPath(String destinationIP) {
-        if (!this.hasEntryFor(destinationIP)){
+        HashMap<String, HashMap<String, Integer>> graph = normalizeGraph(convertDataBaseToGraph());
+        if (!graph.containsKey(destinationIP)){
             System.out.println("Unknown destination IP.");
             return null;
         }
-        HashMap<String, HashMap<String, Integer>> graph = convertDataBaseToGraph();
+        // HashMap<String, HashMap<String, Integer>> graph = normalizeGraph(convertDataBaseToGraph());
         Dijkstra(graph);
         return formatPath(destinationIP);
     }
@@ -186,6 +187,47 @@ public class LinkStateDatabase {
         return graph;
     }
 
+    /**
+     * remove inconsistent link caused by disconnection
+     * remove nodes unreachable from local router
+     * @return
+     */
+    private HashMap<String, HashMap<String, Integer>> normalizeGraph(HashMap<String, HashMap<String, Integer>> graph){
+        HashMap<String, HashMap<String, Integer>> normalizedGraph = new HashMap<String, HashMap<String, Integer>>();
+
+        // traverse the graph from source
+        String cur = localRouterDescription.simulatedIPAddress;
+        Queue<String> routers = new LinkedList<String>();
+        routers.add(cur);
+
+        while (!routers.isEmpty()){
+            cur = routers.poll();
+            if (normalizedGraph.containsKey(cur)) continue; // we have visited this node before
+
+            Set<String> neighbors = graph.get(cur).keySet();
+            for (String neighbor : neighbors){
+                if (graph.containsKey(neighbor) && graph.get(neighbor).containsKey(cur)){
+                    // the link is only valid if it exists in both LSAs
+                    if (!normalizedGraph.containsKey(cur)){
+                        normalizedGraph.put(cur, new HashMap<String, Integer>());
+                    }
+
+                    normalizedGraph.get(cur).put(neighbor, graph.get(cur).get(neighbor));
+                    routers.add(neighbor);
+                }
+            }
+        }
+
+        for (String router : normalizedGraph.keySet()){
+            if (normalizedGraph.get(router).size() <=1 && !router.equals(localRouterDescription.simulatedIPAddress)){
+                normalizedGraph.remove(router);
+            }
+        }
+
+        return normalizedGraph;
+
+    }
+
 
     /**
      * this function modifies dist and prev table. compute the shortest path
@@ -224,11 +266,11 @@ public class LinkStateDatabase {
         }
     }
 
-
+/**
     public boolean hasEntryFor(String routerSimulatedIP) {
         return _store.containsKey(routerSimulatedIP);
     }
-
+**/
     public ArrayList<LSA> getLSAs() {
         ArrayList<LSA> lsas = new ArrayList<LSA>();
         synchronized (_store) {
