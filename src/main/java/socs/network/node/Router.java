@@ -9,8 +9,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 
 
 public class Router {
@@ -151,9 +150,23 @@ public class Router {
 	 * disconnect with all neighbors and quit the program
 	 */
 	private void processQuit() {
+	    System.exit(0);
+	    // TODO: this is not nice. Change this later.
+        // Should close socket and in/ out stream manually so we don't lose pending data.
+	    /**
+	    Collection<Link> links = mapIpLink.values();
+	    Iterator<Link> iterator = links.iterator();
+	    while (mapIpLink.size() > 0){
+	        int curSize = mapIpLink.size();
+            Link link = iterator.next();
+            link.close();
+            while (mapIpLink.size() >= curSize){
 
+            }
+        }
+        System.out.println("Bye!");
+        System.exit(0);**/
 	}
-
 
 
 
