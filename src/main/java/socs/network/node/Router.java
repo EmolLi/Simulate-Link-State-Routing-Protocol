@@ -15,6 +15,7 @@ import java.util.*;
 public class Router {
 	private Socket connection;
 	private final Server server;
+	private boolean hello_was_run = false;
 
 	private LinkStateDatabase linkStateDatabase;
 
@@ -67,33 +68,35 @@ public class Router {
 	 * <p/>
 	 * NOTE: this command should not trigger link database synchronization
 	 */
-	private void processAttach(String processIP, short processPort, String simulatedDstIP, short weight) throws Exception {
+	private boolean processAttach(String processIP, short processPort, String simulatedDstIP, short weight) throws Exception {
 		if(this.localRouterDescription.simulatedIPAddress.equals(simulatedDstIP)){
 			System.err.flush();
 			System.err.print("Cannot connect to yourself!\n");
-			return;
+			return false;
 		}
 		if(mapIpLink.containsKey(simulatedDstIP)){
 			System.err.flush();
 			System.err.print("Already connected to this router.\n");
-			return;
+			return false;
 		}
 
 		if(!(this.mapIpLink.size() < 4)){
 			System.err.flush();
 			System.err.print("All ports are used.\n");
-			return;
+			return false;
 		}
 
 		Socket connectionToRemote = new Socket(processIP, processPort);
 		Thread clientSetup = new Thread( new ClientTask(mapIpLink, connectionToRemote, localRouterDescription, linkStateDatabase, weight, simulatedDstIP));
 		clientSetup.start();
+		return true;
 	}
 
 	/**
 	 * Starts HELLO protocol
 	 */
 	private void processStart() {
+		this.hello_was_run = true;
 		for (Link connection : mapIpLink.values()){
 			if (connection.goesIN) continue;//we only send on connections that go out
 			try {
@@ -110,7 +113,7 @@ public class Router {
 	 * @param connection
 	 * @throws IOException
 	 */
-	//TODO: Make sure that we can't send HELLO twice
+	//TODO: Make sure that we can't send HELLO twice?
 	private void sendHELLO(Link connection) throws IOException {
 		if(connection.remote_router.status != RouterStatus.TWO_WAY){
 			System.out.println("Send initial HELLO to: "+connection.remote_router.simulatedIPAddress);
@@ -120,21 +123,30 @@ public class Router {
 			System.out.println(connection.remote_router.simulatedIPAddress+" is already set to TWO_WAY");
 		}
 	}
+	
+	
 	/**
 	 * attach the link to the remote router, which is identified by the given simulated ip;
 	 * to establish the connection via socket, you need to indentify the process IP and process Port;
 	 * additionally, weight is the cost to transmitting data through the link
 	 * <p/>
 	 * This command does trigger the link database synchronization
+	 * @throws Exception 
 	 */
-	private void processConnect(String processIP, short processPort, String simulatedIP, short weight) {
-
-		//TODO: check if we have run start before, if not return
-
-		//like attach, attach to the remote router if we can. (create the link)
-
-		//like start, but we only send hello on this one link (two way communication on this link)
-
+	private void processConnect(String processIP, short processPort, String simulatedDstIP, short weight) throws Exception {
+		if(!this.hello_was_run){
+			System.err.println("you need to start this router first");
+			System.err.println();
+			return;
+		} 
+		boolean successfull_connection = processAttach(processIP, processPort,simulatedDstIP, weight);
+		if(successfull_connection){
+			Link connection = this.mapIpLink.get(simulatedDstIP);
+			sendHELLO(connection);
+		}
+		else{
+			System.err.println("connection to: "+simulatedDstIP +" failed");
+		}
 	}
 
 	/**
@@ -198,7 +210,7 @@ public class Router {
 							cmdLine[3], Short.parseShort(cmdLine[4]));
 				} else if (command.equals("start")) {
 					processStart();
-				} else if (command.equals("connect ")) {
+				} else if (command.startsWith("connect")) {
 					String[] cmdLine = command.split(" ");
 					processConnect(cmdLine[1], Short.parseShort(cmdLine[2]),
 							cmdLine[3], Short.parseShort(cmdLine[4]));
