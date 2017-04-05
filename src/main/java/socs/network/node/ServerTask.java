@@ -45,12 +45,10 @@ public class ServerTask extends NetworkTask{
 			System.out.println(e);
 			System.err.flush();
 			if (!mapIpLink.containsKey(port.remote_router.simulatedIPAddress)) return;
+			System.out.println("Removing: "+port.remote_router.simulatedIPAddress);
+			this.mapIpLink.remove(port.remote_router.simulatedIPAddress);//remove entry
 			disconnectLink(port);
 			System.out.println(">>");
-			/**
-			System.err.println("Connection to "+ port.remote_router.simulatedIPAddress +" is closed. ");
-			mapIpLink.remove(port.remote_router.simulatedIPAddress);
-			System.err.println("Deleted this link from ports.");**/
 			return;
 		}
 	}

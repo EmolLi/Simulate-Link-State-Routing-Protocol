@@ -33,7 +33,6 @@ public class ClientTask extends NetworkTask {
             System.out.println(e);
             System.err.flush();
             if (!mapIpLink.containsKey(port.remote_router.simulatedIPAddress)) return;
-
             // TODO: change this part later
             disconnectLink(port);
             System.out.println(">>");
