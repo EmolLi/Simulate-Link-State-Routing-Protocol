@@ -56,6 +56,15 @@ public class Router {
 	 * @param portNumber the port number which the link attaches at
 	 */
 	private void processDisconnect(short portNumber) {
+		int usedPorts = linkStateDatabase.getNeighbors().size();
+		if (portNumber < 0 || portNumber >= usedPorts){
+			System.err.println("Invalid port number");
+			return;
+		}
+		Link link = mapIpLink.get(linkStateDatabase.getIPByPortNum(portNumber));
+//		System.out.println(portNumber + "PNum");
+		link.close();
+		/**
 		try{
 			Link link = mapIpLink.get(linkStateDatabase.getIPByPortNum(portNumber));
 			System.out.println(portNumber + " PNum");
@@ -64,7 +73,7 @@ public class Router {
 			this.linkStateDatabase.removeLink(link);
 		}catch (Exception e){
 			System.err.println("Provide correct portNumber (-_-)");
-		}
+		}**/
 	}
 
 	/**

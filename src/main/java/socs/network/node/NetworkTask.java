@@ -180,9 +180,10 @@ public abstract class NetworkTask implements Runnable{
 		if (link.linkClosed){
 			// link closed successfully
 			linkStateDatabase.removeLink(link);
-			System.out.print("123");
+			mapIpLink.remove(link.remote_router.simulatedIPAddress);
 			// boardcast to neighbors
 			broadcastLSAUPDATE();
+			System.out.println("Link at port: "+ link.portNum +" -- "+ link.remote_router.simulatedIPAddress + " closed.");
 			return true;
 		}
 

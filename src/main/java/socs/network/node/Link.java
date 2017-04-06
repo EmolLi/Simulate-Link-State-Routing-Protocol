@@ -54,7 +54,7 @@ public class Link {
 		    in.close();
 		    out.close();
 		    connection.close();
-		    System.out.println("success");
+//		    System.out.println("success");
 		    linkClosed = true;
 		    return true;
 		}catch (Exception e){
@@ -67,7 +67,7 @@ public class Link {
 	    try {
 
 			if (this.connection == null){
-				System.out.print("connection null");
+				System.out.print("connection is null");
 			}
 			out.writeObject(packet);
 		}catch (Exception e){

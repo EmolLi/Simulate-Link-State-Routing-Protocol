@@ -45,8 +45,9 @@ public class ServerTask extends NetworkTask{
 			System.out.println(e);
 			System.err.flush();
 			if (!mapIpLink.containsKey(port.remote_router.simulatedIPAddress)) return;
+			/**
 			System.out.println("Removing: "+port.remote_router.simulatedIPAddress);
-			this.mapIpLink.remove(port.remote_router.simulatedIPAddress);//remove entry
+			this.mapIpLink.remove(port.remote_router.simulatedIPAddress);//remove entry**/
 			disconnectLink(port);
 			System.out.println(">>");
 			return;
