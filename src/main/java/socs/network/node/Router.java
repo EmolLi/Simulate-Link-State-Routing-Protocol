@@ -177,22 +177,12 @@ public class Router {
 	 * disconnect with all neighbors and quit the program
 	 */
 	private void processQuit() {
+		for(short i = 0; i < 4; i++){
+			if(this.linkStateDatabase.getIPByPortNum(i) != null){
+				this.processDisconnect(i);
+			}
+		}
 	    System.exit(0);
-	    // TODO: this is not nice. Change this later.
-        // Should close socket and in/ out stream manually so we don't lose pending data.
-	    /**
-	    Collection<Link> links = mapIpLink.values();
-	    Iterator<Link> iterator = links.iterator();
-	    while (mapIpLink.size() > 0){
-	        int curSize = mapIpLink.size();
-            Link link = iterator.next();
-            link.close();
-            while (mapIpLink.size() >= curSize){
-
-            }
-        }
-        System.out.println("Bye!");
-        System.exit(0);**/
 	}
 
 
@@ -215,14 +205,24 @@ public class Router {
 					String[] cmdLine = command.split(" ");
 					processDetect(cmdLine[1]);
 				} else if (command.startsWith("disconnect ")) {
-					String[] cmdLine = command.split(" ");
-					processDisconnect(Short.parseShort(cmdLine[1]));
+					if(this.hello_was_run){
+						String[] cmdLine = command.split(" ");
+						processDisconnect(Short.parseShort(cmdLine[1]));
+					}
+					else{
+						System.err.println("You need to start before disconnecting");
+					}
 				} else if (command.startsWith("quit")) {
 					processQuit();
 				} else if (command.startsWith("attach ")) {
 					String[] cmdLine = command.split(" ");
-					processAttach(cmdLine[1], Short.parseShort(cmdLine[2]),
+					if(this.hello_was_run){
+						System.err.println("Start was run use connect instead of attach");
+					}
+					else{
+						processAttach(cmdLine[1], Short.parseShort(cmdLine[2]),
 							cmdLine[3], Short.parseShort(cmdLine[4]));
+					}
 				} else if (command.equals("start")) {
 					processStart();
 				} else if (command.startsWith("connect")) {
