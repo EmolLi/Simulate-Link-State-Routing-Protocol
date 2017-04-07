@@ -55,7 +55,7 @@ public class Router {
 	 *
 	 * @param portNumber the port number which the link attaches at
 	 */
-	private void processDisconnect(short portNumber) {
+	private synchronized void processDisconnect(short portNumber) {
 		int usedPorts = linkStateDatabase.getNeighbors().size();
 		if (portNumber < 0 || portNumber >= usedPorts){
 			System.err.println("Invalid port number");

@@ -63,7 +63,7 @@ public abstract class NetworkTask implements Runnable{
                     }
                 } catch (Exception e) {
                     System.err.println("could not update LinkStateDatabase");
-                    e.printStackTrace();
+                    // e.printStackTrace();
                 }
         }
     }
@@ -183,6 +183,7 @@ public abstract class NetworkTask implements Runnable{
 			mapIpLink.remove(link.remote_router.simulatedIPAddress);
 			// boardcast to neighbors
 			broadcastLSAUPDATE();
+			linkStateDatabase.normalizeDB();
 			System.out.println("Link at port: "+ link.portNum +" -- "+ link.remote_router.simulatedIPAddress + " closed.");
 			return true;
 		}
